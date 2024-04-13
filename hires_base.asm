@@ -163,8 +163,6 @@ Off
     rts
 
 
-backgroundColor .byte 0
-
 clearBitmap
     stz COUNT_WINDOWS
     lda COUNT_WINDOWS
@@ -188,12 +186,15 @@ _nextWindow
 
     rts
 
-strSetPixelArgs .struct 
-x               .word 0
-y               .byte 0
-col             .byte 0
-                .endstruct
 
+strSetPixelArgs .struct 
+    x               .word 0
+    y               .byte 0
+    col             .byte 0
+.endstruct
+
+
+backgroundColor .byte 0
 setPixelArgs .dstruct strSetPixelArgs
 
 ; --------------------------------------------------

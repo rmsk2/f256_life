@@ -13,9 +13,9 @@ WORLD_1_BLOCK = WORLD_0_BLOCK + 1
 
 init
     jsr setWorld0
-    jsr clearWorld
+    jsr clear
     jsr setWorld1
-    jsr clearWorld
+    jsr clear
     rts
 
 
@@ -35,7 +35,7 @@ setWorld1
     rts
 
 
-clearWorld
+clear
     #load16BitImmediate WORLD_WINDOW, WORLD_PTR
     ldx #0
 _nextBlock
@@ -50,5 +50,18 @@ _loopBlock
     cpx #32
     bne _nextBlock
     rts
+
+
+fill
+    rts
+
+
+calcOneRound
+    rts
+
+
+draw
+    rts
+
 
 .endnamespace
