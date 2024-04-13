@@ -123,6 +123,7 @@ setLayer0
     #restoreIo
     rts
 
+
 setLayer0Addr
     lda #BITMAP_0_MEM/8192
     sta HIRES_BASE_PAGE
