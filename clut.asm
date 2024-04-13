@@ -19,6 +19,10 @@ GFX_RED = 3
 GFX_GREEN = 4
 GFX_BLUE = 2
 
+TXT_BLACK = 0
+TXT_WHITE = 1
+TXT_BLUE = 2
+
 clut .namespace
 
 TXT_LUT_FORE_GROUND_BASE = $D800
@@ -86,9 +90,9 @@ init
     ; #setGfxColInt 13, $01, $FF, $C1, $FF
     
     #setIo 0
-    #setTxtColInt 0,  $00, $00, $00, $FF
-    #setTxtColInt 1,  $FF, $FF, $FF, $FF
-    #setTxtColInt 2,  $00, $00, $FF, $FF
+    #setTxtColInt TXT_BLACK,  $00, $00, $00, $FF
+    #setTxtColInt TXT_WHITE,  $FF, $FF, $FF, $FF
+    #setTxtColInt TXT_BLUE,  $00, $00, $FF, $FF
     ; #setTxtColInt 3,  $00, $CF, $00, $FF
     ; #setTxtColInt 4,  $00, $BF, $00, $FF
     ; #setTxtColInt 5,  $00, $AF, $00, $FF

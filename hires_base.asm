@@ -123,6 +123,17 @@ setLayer0
     #restoreIo
     rts
 
+setLayer0Addr
+    lda #BITMAP_0_MEM/8192
+    sta HIRES_BASE_PAGE
+    rts
+
+
+setLayer1Addr
+    lda #BITMAP_1_MEM/8192
+    sta HIRES_BASE_PAGE
+    rts
+
 
 setLayer1
     #saveIo
@@ -149,6 +160,7 @@ Off
     sta VKY_MSTR_CTRL_0
     stz VKY_MSTR_CTRL_1
     rts
+
 
 backgroundColor .byte 0
 
@@ -196,6 +208,7 @@ setPixel
     #load16BitImmediate 320, $DE02
 
     ; calculate (320 * YPOS) + XPOS    
+    ; 24 bit result is in ZP_GRAPHIC_PTR GRAPHIC_ADDRESS GRAPHIC_ADDRESS+1
     clc
     lda MUL_RES_CO_PROC
     adc setPixelArgs.x
@@ -208,7 +221,7 @@ setPixel
     sta GRAPHIC_ADDRESS+1
 
     ; get address in 8K window => look at lower 13 bits
-    ; caclulate ((320 * YPOS + XPOS) MOD 8192) + $6000
+    ; caclulate ((320 * YPOS + XPOS) MOD 8192) + BITMAP_WINDOW
     lda GRAPHIC_ADDRESS
     and #%00011111
     clc 

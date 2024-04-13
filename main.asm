@@ -11,10 +11,11 @@ jmp main
 .include "hires_base.asm"
 .include "random.asm"
 .include "txtio.asm"
+.include "world.asm"
 
 
 main
-    ; setup MMU, this seems to be neccessary when running as a PGX
+    ; setup MMU, this seems to be neccessary when running as a PGZ
     lda #%10110011                         ; set active and edit LUT to three and allow editing
     sta 0
     lda #%00000000                         ; enable io pages and set active page to 0
@@ -33,31 +34,18 @@ main
     jsr random.init
     jsr clut.init
     jsr txtio.init
+    jsr world.init
 
-    #setCol $10
+    #setCol (TXT_BLACK << 4) | (TXT_BLACK)
     jsr txtio.clear
     jsr txtio.home
 
-    lda #GFX_BLUE
+    lda #GFX_WHITE
     sta hires.backgroundColor    
     jsr hires.setLayer0
-    
-    #printString MSG1, len(MSG1)
-    jsr waitForKey
-
     jsr hires.clearBitmap
-
-    #printString MSG2, len(MSG2)
-    jsr waitForKey
-
-    lda #GFX_GREEN
-    sta hires.backgroundColor
     jsr hires.setLayer1
-
-    #printString MSG3, len(MSG3)
-    jsr waitForKey
-
-    jsr hires.clearBitmap
+    jsr hires.clearBitmap    
 
     #printString MSG4, len(MSG4)
     jsr waitForKey
@@ -70,7 +58,4 @@ main
     rts
 
 
-MSG1 .text "Layer 0: Press any key to clear", $0d
-MSG2 .text "Layer 0: Press any key to switch to layer 1", $0d
-MSG3 .text "Layer 1: Press any key to clear", $0d
-MSG4 .text "Layer 1: Press any key to end", $0d
+MSG4 .text "Press any key to end", $0d
