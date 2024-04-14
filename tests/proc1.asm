@@ -12,8 +12,6 @@ jmp test
 
 test
     jsr mmuSetup
-    jsr world.init
-    jsr world.fill
     ;#TRAP TRAP_PRINT_0
     jsr world.calcOneRound
     ;#TRAP TRAP_PRINT_1
