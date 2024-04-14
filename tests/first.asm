@@ -3,7 +3,7 @@
 
 jmp test
 
-.include "tests/mmu_setup.asm"
+.include "setup.asm"
 .include "arith16.asm"
 .include "zeropage.asm"
 .include "world.asm"
