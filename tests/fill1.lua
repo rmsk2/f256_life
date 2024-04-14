@@ -1,4 +1,5 @@
 require (test_dir.."trap")
+require (test_dir.."life")
 
 function arrange()
 

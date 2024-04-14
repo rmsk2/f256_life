@@ -20,6 +20,7 @@ init
     jsr setWorld1
     jsr clear
     jsr setWorld0
+    stz WORLD_NUMBER
     rts
 
 
@@ -36,6 +37,35 @@ setWorld1
     lda #WORLD_1_BLOCK
     sta WORLD_MMU_ADDR
     pla
+    rts
+
+WORLD_NUMBER .byte 0
+WORLD_TABLE
+.word setWorld0
+.word setWorld1
+
+worldFunc
+    jmp (WORLD_TABLE, x)
+
+setWorld
+    pha
+    phx
+    lda WORLD_NUMBER
+    asl
+    tax
+    jsr worldFunc
+    plx
+    pla
+    rts
+
+
+flipWorld
+    pha
+    lda WORLD_NUMBER
+    eor #1
+    sta WORLD_NUMBER
+    pla
+    jsr setWorld
     rts
 
 
@@ -102,9 +132,22 @@ setLinePtrs
 
 Counters_t .struct 
     lineCount .byte 0
+    colCount  .byte 0
+    sum       .byte 0
+    x_minus_1 .byte 0
+    x_plus_1  .byte 0
 .endstruct
 
 COUNTERS .dstruct Counters_t
+CANCEL_VECTOR .word dummyCancel
+
+testInterrupt
+    jmp (CANCEL_VECTOR)
+
+dummyCancel
+    clc
+    rts
+
 
 updateLinePtrs
     #add16BitImmediate 128, UPPER_PTR
@@ -125,9 +168,84 @@ _updateMain
     rts
 
 
+calcOneCell
+    stz COUNTERS.sum
+    lda COUNTERS.colCount
+    ina
+    and #$7F
+    sta COUNTERS.x_plus_1
+
+    lda COUNTERS.colCount
+    dea
+    and #$7F
+    sta COUNTERS.x_minus_1
+
+    ; count living neighbours
+    lda #0
+    clc
+    ldy COUNTERS.colCount
+    adc (UPPER_PTR), y
+    adc (LOWER_PTR), y
+    ldy COUNTERS.x_minus_1
+    adc (UPPER_PTR), y
+    adc (LOWER_PTR), y
+    adc (LINE_PTR), y
+    ldy COUNTERS.x_plus_1
+    adc (UPPER_PTR), y
+    adc (LOWER_PTR), y
+    adc (LINE_PTR), y
+    sta COUNTERS.sum
+
+    ldy COUNTERS.colCount
+    lda (LINE_PTR), y
+    beq _currentlyDead
+    lda COUNTERS.sum
+    cmp #2
+    bcc _cellDies
+    cmp #4
+    bcc _cellLives
+_cellDies
+    lda #0
+    jsr flipWorld
+    sta (LINE_PTR), y
+    bra _end
+_currentlyDead
+    lda COUNTERS.sum
+    cmp #3
+    beq _cellLives
+    bra _cellDies
+_cellLives
+    lda #1
+    jsr flipWorld
+    sta (LINE_PTR), y
+_end
+    jsr flipWorld
+    rts
+
+
 calcOneRound
     stz COUNTERS.lineCount
+    stz COUNTERS.colCount
     jsr setLinePtrs
+_nextIteration
+    lda COUNTERS.lineCount
+    cmp #64
+    beq _done
+    lda COUNTERS.colCount
+    cmp #128
+    beq _nextLine
+    jsr calcOneCell
+    inc COUNTERS.colCount
+    jmp _nextIteration
+_nextLine
+    jsr testInterrupt
+    bcs _done
+    stz COUNTERS.colCount
+    inc COUNTERS.lineCount
+    jsr updateLinePtrs
+    jmp _nextIteration
+_done
+    jsr flipWorld
     rts
 
 
