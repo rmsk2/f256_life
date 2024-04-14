@@ -14,6 +14,6 @@ test
     jsr mmuSetup
     jsr world.init
     jsr world.fill
-    ; print world 0
-    #TRAP 1
+    #TRAP TRAP_PRINT_0
+    #TRAP TRAP_PRINT_1
     brk

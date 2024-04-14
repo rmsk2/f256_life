@@ -1,7 +1,7 @@
 random .namespace
 
 get
-    #TRAP 0
+    #TRAP TRAP_RANDOM
     rts
 
 .endnamespace
