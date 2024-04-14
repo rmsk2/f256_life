@@ -22,6 +22,7 @@ $(BINARY): *.asm
 clean: 
 	$(RM) $(FORCE) $(BINARY)
 	$(RM) $(FORCE) $(BINARY).pgz
+	$(RM) $(FORCE) tests/bin/*.bin
 
 upload: $(BINARY).pgz
 	$(SUDO) python fnxmgr.zip --port $(PORT) --run-pgz $(BINARY).pgz
@@ -30,4 +31,4 @@ $(BINARY).pgz: $(BINARY)
 	python make_pgz.py $(BINARY)
 
 test:
-	6502profiler verifyall -c config.json
+	6502profiler verifyall -c config.json -trapaddr 0x07FF

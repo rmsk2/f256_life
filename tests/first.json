@@ -1,5 +1,0 @@
-{
-    "Name": "First test",
-    "TestDriverSource": "first.asm",
-    "TestScript": "first.lua"
-}

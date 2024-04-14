@@ -1,0 +1,5 @@
+{
+    "Name": "Clear test",
+    "TestDriverSource": "clear.asm",
+    "TestScript": "clear.lua"
+}
