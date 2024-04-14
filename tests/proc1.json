@@ -1,0 +1,5 @@
+{
+    "Name": "Processing test 1",
+    "TestDriverSource": "proc1.asm",
+    "TestScript": "proc1.lua"
+}
