@@ -7,6 +7,9 @@ WORLD_WINDOW = $8000
 WORLD_8K_BLOCK = WORLD_WINDOW / 8192
 WORLD_MMU_ADDR = WORLD_8K_BLOCK + 8
 
+UPPER_WINDOW = WORLD_WINDOW + 8192 - 128
+LOWER_WINDOW = WORLD_WINDOW + 128
+
 WORLD_0_BLOCK = WORLD_0_ADDR / 8192
 WORLD_1_BLOCK = WORLD_0_BLOCK + 1
 
@@ -89,7 +92,41 @@ fill
     jmp iterateOverWorld
 
 
+setLinePtrs
+    #load16BitImmediate WORLD_WINDOW, LINE_PTR
+    #load16BitImmediate UPPER_WINDOW, UPPER_PTR
+    #load16BitImmediate LOWER_WINDOW, LOWER_PTR
+    rts
+
+
+Counters_t .struct 
+    lineCount .byte 0
+.endstruct
+
+COUNTERS .dstruct Counters_t
+
+updateLinePtrs
+    #add16BitImmediate 128, UPPER_PTR
+    lda UPPER_PTR+1
+    cmp #$A0
+    bne _checkLower
+    ; wrap around of UPPER_PTR
+    #load16BitImmediate WORLD_WINDOW, UPPER_PTR
+_checkLower
+    #add16BitImmediate 128, LOWER_PTR
+    lda LOWER_PTR+1
+    cmp #$A0
+    bne _updateMain
+    ; wrap around of LOWER
+    #load16BitImmediate WORLD_WINDOW, LOWER_PTR
+_updateMain
+    #add16BitImmediate 128, LINE_PTR
+    rts
+
+
 calcOneRound
+    stz COUNTERS.lineCount
+    jsr setLinePtrs
     rts
 
 
