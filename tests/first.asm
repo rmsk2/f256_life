@@ -10,6 +10,5 @@ jmp test
 
 test
     jsr mmuSetup
-
     jsr world.init
     brk

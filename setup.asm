@@ -10,3 +10,4 @@ mmuSetup
     sta 8+4
     lda #5
     sta 8+5
+    rts
