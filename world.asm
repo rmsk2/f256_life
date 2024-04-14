@@ -38,6 +38,7 @@ setWorld1
     pla
     rts
 
+
 clearByte
     lda #0
     sta (WORLD_PTR),y

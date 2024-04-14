@@ -1,0 +1,5 @@
+{
+    "Name": "Torus Test 1",
+    "TestDriverSource": "torus1.asm",
+    "TestScript": "torus1.lua"
+}
