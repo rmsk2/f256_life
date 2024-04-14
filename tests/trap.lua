@@ -70,6 +70,21 @@ function print_world(start, end_addr)
     print(string.format("Cells alive: %d", cells_alive))
 end
 
+
+function count_non_zero(start, end_addr)
+    local cells_alive = 0
+    
+    for i = start, end_addr, 1 do
+
+        data = read_byte_long(i)
+
+        if data ~= 0 then
+            cells_alive = cells_alive + 1
+        end
+    end 
+end
+
+
 TRAP_TABLE[0] = get_random
 TRAP_TABLE[1] = print_world_0
 TRAP_TABLE[2] = print_world_1

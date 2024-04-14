@@ -15,5 +15,7 @@ test
     jsr world.init
     jsr world.fill
     #TRAP TRAP_PRINT_0
+    jsr world.setWorld1
+    jsr world.fill
     #TRAP TRAP_PRINT_1
     brk
