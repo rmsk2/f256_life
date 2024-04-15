@@ -8,6 +8,8 @@ jmp test
 .include "arith16.asm"
 .include "zeropage.asm"
 .include "tests/rand_test.asm"
+.include "hires_base.asm"
+.include "clut.asm"
 .include "world.asm"
 
 FIRST_CALL .byte 0
