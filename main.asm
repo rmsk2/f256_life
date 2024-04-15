@@ -32,14 +32,23 @@ main
 
     lda #GFX_WHITE
     sta hires.backgroundColor    
-    jsr hires.setLayer0
+    jsr hires.setLayer0Addr
     jsr hires.clearBitmap
-    jsr hires.setLayer1
+    jsr hires.setLayer1Addr
     jsr hires.clearBitmap    
 
-    #printString MSG4, len(MSG4)
+    jsr world.fill
+    jsr hires.setLayer0Addr
+    jsr world.drawPic
+    jsr hires.setLayer0
     jsr waitForKey
 
+_doCalc
+    jsr world.calcOneRound
+    bcs _done
+    jsr world.draw
+    bra _doCalc
+_done
     jsr hires.Off
     
     jsr sys64738
@@ -47,5 +56,3 @@ main
     ; we never get here I guess ....
     rts
 
-
-MSG4 .text "Press any key to end", $0d

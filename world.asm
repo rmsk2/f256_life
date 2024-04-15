@@ -15,19 +15,21 @@ WORLD_1_BLOCK = WORLD_0_BLOCK + 1
 
 
 init
+    stz HIRES_LAYER
     jsr setWorld0
     jsr clear
     jsr setWorld1
     jsr clear
     jsr setWorld0
-    stz WORLD_NUMBER
     rts
-
 
 setWorld0
     pha
     lda #WORLD_0_BLOCK
     sta WORLD_MMU_ADDR
+    sta ACT_WORLD_BLOCK
+    lda #WORLD_1_BLOCK
+    sta ALT_WORLD_BLOCK    
     pla
     rts
 
@@ -36,36 +38,30 @@ setWorld1
     pha
     lda #WORLD_1_BLOCK
     sta WORLD_MMU_ADDR
-    pla
-    rts
-
-WORLD_NUMBER .byte 0
-WORLD_TABLE
-.word setWorld0
-.word setWorld1
-
-worldFunc
-    jmp (WORLD_TABLE, x)
-
-setWorld
-    pha
-    phx
-    lda WORLD_NUMBER
-    asl
-    tax
-    jsr worldFunc
-    plx
+    sta ACT_WORLD_BLOCK
+    lda #WORLD_0_BLOCK
+    sta ALT_WORLD_BLOCK
     pla
     rts
 
 
-flipWorld
-    pha
-    lda WORLD_NUMBER
-    eor #1
-    sta WORLD_NUMBER
-    pla
-    jsr setWorld
+mmuAct .macro
+    lda ACT_WORLD_BLOCK
+    sta WORLD_MMU_ADDR
+.endmacro
+
+
+mmuAlt .macro
+    lda ALT_WORLD_BLOCK
+    sta WORLD_MMU_ADDR
+.endmacro
+
+
+switchBlocks
+    ldx ACT_WORLD_BLOCK
+    lda ALT_WORLD_BLOCK
+    stx ALT_WORLD_BLOCK
+    sta ACT_WORLD_BLOCK
     rts
 
 
@@ -130,15 +126,6 @@ setLinePtrs
     rts
 
 
-Counters_t .struct 
-    lineCount .byte 0
-    colCount  .byte 0
-    sum       .byte 0
-    x_minus_1 .byte 0
-    x_plus_1  .byte 0
-.endstruct
-
-COUNTERS .dstruct Counters_t
 CANCEL_VECTOR .word dummyCancel
 
 testInterrupt
@@ -167,89 +154,141 @@ _updateMain
     #add16BitImmediate 128, LINE_PTR
     rts
 
+TAB_ALIVE .byte 0, 0, 1, 1, 0, 0, 0, 0, 0
+TAB_DEAD  .byte 0, 0, 0, 1, 0, 0, 0, 0, 0
 
 calcOneCell
-    stz COUNTERS.sum
-    lda COUNTERS.colCount
+    lda CTR_colCount
     ina
     and #$7F
-    sta COUNTERS.x_plus_1
+    sta CTR_x_plus_1
 
-    lda COUNTERS.colCount
+    lda CTR_colCount
     dea
     and #$7F
-    sta COUNTERS.x_minus_1
+    sta CTR_x_minus_1
 
     ; count living neighbours
     lda #0
     clc
-    ldy COUNTERS.colCount
+    ldy CTR_colCount
     adc (UPPER_PTR), y
     adc (LOWER_PTR), y
-    ldy COUNTERS.x_minus_1
-    adc (UPPER_PTR), y
-    adc (LOWER_PTR), y
-    adc (LINE_PTR), y
-    ldy COUNTERS.x_plus_1
+    ldy CTR_x_minus_1
     adc (UPPER_PTR), y
     adc (LOWER_PTR), y
     adc (LINE_PTR), y
-    sta COUNTERS.sum
+    ldy CTR_x_plus_1
+    adc (UPPER_PTR), y
+    adc (LOWER_PTR), y
+    adc (LINE_PTR), y
+    tax
 
-    ldy COUNTERS.colCount
+    ldy CTR_colCount
     lda (LINE_PTR), y
     beq _currentlyDead
-    lda COUNTERS.sum
-    cmp #2
-    bcc _cellDies
-    cmp #4
-    bcc _cellLives
-_cellDies
-    lda #0
-    jsr flipWorld
+    #mmuAlt
+    lda TAB_ALIVE, x
     sta (LINE_PTR), y
-    bra _end
+    #mmuAct
+    rts
 _currentlyDead
-    lda COUNTERS.sum
-    cmp #3
-    beq _cellLives
-    bra _cellDies
-_cellLives
-    lda #1
-    jsr flipWorld
+    #mmuAlt
+    lda TAB_DEAD, x
     sta (LINE_PTR), y
-_end
-    jsr flipWorld
+    #mmuAct
     rts
 
 
 calcOneRound
-    stz COUNTERS.lineCount
-    stz COUNTERS.colCount
+    stz CTR_lineCount
+    stz CTR_colCount
     jsr setLinePtrs
 _nextIteration
-    lda COUNTERS.lineCount
+    lda CTR_lineCount
     cmp #64
     beq _done
-    lda COUNTERS.colCount
+    lda CTR_colCount
     cmp #128
     beq _nextLine
     jsr calcOneCell
-    inc COUNTERS.colCount
+    inc CTR_colCount
     jmp _nextIteration
 _nextLine
     jsr testInterrupt
-    bcs _done
-    stz COUNTERS.colCount
-    inc COUNTERS.lineCount
+    bcs _done2
+    stz CTR_colCount
+    inc CTR_lineCount
     jsr updateLinePtrs
     jmp _nextIteration
 _done
-    jsr flipWorld
+    jsr switchBlocks
+    #mmuAct
+    clc
+_done2
     rts
 
+HIRES_LAYER .byte 0
+
+plot .macro
+    phy
+    jsr hires.setPixel
+    ply
+.endmacro
+
+drawPic
+    stz hires.setPixelArgs.x+1
+    stz CTR_lineCount
+    stz CTR_colCount
+    #load16BitImmediate WORLD_WINDOW, LINE_PTR
+    ldy #0
+_nextIteration
+    lda CTR_lineCount
+    cmp #64
+    beq _doneDraw
+    lda CTR_colCount
+    cmp #128
+    beq _nextLine
+
+    lda CTR_lineCount
+    sta hires.setPixelArgs.y
+    lda CTR_colCount
+    sta hires.setPixelArgs.x
+    lda (LINE_PTR), y
+    eor #1
+    sta hires.setPixelArgs.col
+    #plot
+
+    inc CTR_colCount
+    iny
+    jmp _nextIteration
+_nextLine
+    stz CTR_colCount
+    ldy #0
+    inc CTR_lineCount
+    #add16BitImmediate 128, LINE_PTR
+    jmp _nextIteration
+_doneDraw
+    rts
 
 draw
+    lda HIRES_LAYER
+    eor #1
+    sta HIRES_LAYER
+    beq _l0
+    jsr hires.setLayer1Addr
+    bra _goon
+_l0
+    jsr hires.setLayer0Addr
+_goon
+    jsr drawPic
+
+    lda HIRES_LAYER
+    beq _l0_2
+    jsr hires.setLayer1
+    rts
+_l0_2
+    jsr hires.setLayer0
     rts
 
 

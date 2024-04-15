@@ -197,6 +197,9 @@ strSetPixelArgs .struct
 backgroundColor .byte 0
 setPixelArgs .dstruct strSetPixelArgs
 
+setQuadPixel
+    rts
+
 ; --------------------------------------------------
 ; This routine sets a pixel in the bitmap using XPOS, YPOS and
 ; COLOR from above
