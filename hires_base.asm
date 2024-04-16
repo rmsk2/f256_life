@@ -197,8 +197,6 @@ strSetPixelArgs .struct
 backgroundColor .byte 0
 setPixelArgs .dstruct strSetPixelArgs
 
-setQuadPixel
-    rts
 
 inc2 .macro memAddr2 
     clc
@@ -244,6 +242,7 @@ plot2
     inc WINDOW_MMU_ADDR
 _done
     rts
+
 
 setAddress
     ; multiply 320 and y position

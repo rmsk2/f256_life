@@ -269,7 +269,7 @@ _nextCol
     beq _nextLine
 
     lda (LINE_PTR), y
-    eor #1
+    ;eor #1
     sta hires.setPixelArgs.col
     #plot
     iny
