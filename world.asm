@@ -208,12 +208,13 @@ _nextIteration
     lda CTR_lineCount
     cmp #64
     beq _done
+_nextCol
     lda CTR_colCount
     cmp #128
     beq _nextLine
     jsr calcOneCell
     inc CTR_colCount
-    jmp _nextIteration
+    bra _nextCol
 _nextLine
     jsr testInterrupt
     bcs _done2
