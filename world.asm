@@ -230,46 +230,62 @@ _done2
 
 HIRES_LAYER .byte 0
 
+
 plot .macro
     phy
-    jsr hires.setPixel
+    jsr hires.plot
     ply
 .endmacro
 
-drawPic
-    stz hires.setPixelArgs.x+1
+
+plot2 .macro
+    phy
+    jsr hires.plot2
+    ply
+.endmacro
+
+
+setPlotAddr .macro
+    phy
+    jsr hires.setAddress
+    ply
+.endmacro
+
+
+drawPic    
     stz CTR_lineCount
-    stz CTR_colCount
-    #load16BitImmediate WORLD_WINDOW, LINE_PTR
+    #load16BitImmediate WORLD_WINDOW, LINE_PTR    
+    stz hires.setPixelArgs.x
+    stz hires.setPixelArgs.x+1
+    stz hires.setPixelArgs.y
+    jsr hires.setAddress
     ldy #0
 _nextIteration
     lda CTR_lineCount
     cmp #64
     beq _doneDraw
-    lda CTR_colCount
-    cmp #128
+_nextCol
+    cpy #128
     beq _nextLine
 
-    lda CTR_lineCount
-    sta hires.setPixelArgs.y
-    lda CTR_colCount
-    sta hires.setPixelArgs.x
     lda (LINE_PTR), y
     eor #1
     sta hires.setPixelArgs.col
     #plot
-
-    inc CTR_colCount
     iny
-    jmp _nextIteration
+    bra _nextCol
 _nextLine
-    stz CTR_colCount
-    ldy #0
     inc CTR_lineCount
+    lda CTR_lineCount
+    sta hires.setPixelArgs.y
+    stz hires.setPixelArgs.x
+    #setPlotAddr
+    ldy #0
     #add16BitImmediate 128, LINE_PTR
     jmp _nextIteration
 _doneDraw
     rts
+
 
 draw
     lda HIRES_LAYER

@@ -15,3 +15,5 @@ CTR_colCount = $A6
 ;CTR_sum = $A7
 CTR_x_minus_1 = $A8
 CTR_x_plus_1  = $A9
+ZP_PLOT_PTR = $AA;$AB
+ZP_PLOT_PTR2 = $AC;$AD

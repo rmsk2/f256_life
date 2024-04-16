@@ -200,6 +200,99 @@ setPixelArgs .dstruct strSetPixelArgs
 setQuadPixel
     rts
 
+inc2 .macro memAddr2 
+    clc
+    ; add lo bytes
+    lda #2
+    adc \memAddr2
+    sta \memAddr2
+    lda \memAddr2+1
+    adc #0
+    sta \memAddr2+1
+.endmacro
+
+
+plot
+    lda setPixelArgs.col
+    sta (ZP_PLOT_PTR)
+
+    #inc16bit ZP_PLOT_PTR
+    lda ZP_PLOT_PTR+1
+    and #%11011111                                                     ; overflow wrt to the window occurred, this only works in bank $A000
+    bne _done
+    lda ZP_PLOT_PTR+1
+    ora #%00100000
+    and #%10111111
+    sta ZP_PLOT_PTR+1
+    inc WINDOW_MMU_ADDR
+_done
+    rts
+
+
+plot2
+    lda setPixelArgs.col
+    sta (ZP_PLOT_PTR)
+
+    #inc2 ZP_PLOT_PTR
+    lda ZP_PLOT_PTR+1
+    and #%11011111                                                     ; overflow wrt to the window occurred, this only works in bank $A000
+    bne _done
+    lda ZP_PLOT_PTR+1
+    ora #%00100000
+    and #%10111111
+    sta ZP_PLOT_PTR+1
+    inc WINDOW_MMU_ADDR
+_done
+    rts
+
+setAddress
+    ; multiply 320 and y position
+    ; multiplication result is stored at $DE04-$DE07
+    lda setPixelArgs.y
+    sta $DE00
+    stz $DE01
+    #load16BitImmediate 320, $DE02
+
+    ; calculate (320 * YPOS) + XPOS    
+    ; 24 bit result is in ZP_GRAPHIC_PTR GRAPHIC_ADDRESS GRAPHIC_ADDRESS+1
+    clc
+    lda MUL_RES_CO_PROC
+    adc setPixelArgs.x
+    sta ZP_PLOT_PTR
+    lda MUL_RES_CO_PROC+1
+    adc setPixelArgs.x+1
+    sta GRAPHIC_ADDRESS
+    lda #0
+    adc MUL_RES_CO_PROC+2
+    sta GRAPHIC_ADDRESS+1
+
+    ; get address in 8K window => look at lower 13 bits
+    ; caclulate ((320 * YPOS + XPOS) MOD 8192) + BITMAP_WINDOW
+    lda GRAPHIC_ADDRESS
+    and #%00011111
+    clc 
+    adc #>BITMAP_WINDOW
+    sta ZP_PLOT_PTR+1
+
+    ; determine 8K window to write to
+    ; calculate (320 * YPOS + XPOS) DIV 8192
+    ; get lower three bits 
+    lda GRAPHIC_ADDRESS
+    lsr
+    lsr 
+    lsr 
+    lsr
+    lsr 
+    ; get most significant bit for bitmap window 
+    ; GRAPHIC_ADDRESS+1 can either be zero or one
+    ldy GRAPHIC_ADDRESS+1
+    beq _writeColor
+    ora #8
+_writeColor    
+    #setWindow
+    rts
+
+
 ; --------------------------------------------------
 ; This routine sets a pixel in the bitmap using XPOS, YPOS and
 ; COLOR from above
