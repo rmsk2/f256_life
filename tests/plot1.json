@@ -1,0 +1,5 @@
+{
+    "Name": "Plot test",
+    "TestDriverSource": "plot1.asm",
+    "TestScript": "plot1.lua"
+}

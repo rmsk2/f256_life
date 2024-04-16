@@ -216,28 +216,10 @@ plot
 
     #inc16bit ZP_PLOT_PTR
     lda ZP_PLOT_PTR+1
-    and #%11011111                                                     ; overflow wrt to the window occurred, this only works in bank $A000
+    and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
     bne _done
     lda ZP_PLOT_PTR+1
-    ora #%00100000
-    and #%10111111
-    sta ZP_PLOT_PTR+1
-    inc WINDOW_MMU_ADDR
-_done
-    rts
-
-
-plot2
-    lda setPixelArgs.col
-    sta (ZP_PLOT_PTR)
-
-    #inc2 ZP_PLOT_PTR
-    lda ZP_PLOT_PTR+1
-    and #%11011111                                                     ; overflow wrt to the window occurred, this only works in bank $A000
-    bne _done
-    lda ZP_PLOT_PTR+1
-    ora #%00100000
-    and #%10111111
+    eor #%01100000
     sta ZP_PLOT_PTR+1
     inc WINDOW_MMU_ADDR
 _done

@@ -238,13 +238,6 @@ plot .macro
 .endmacro
 
 
-plot2 .macro
-    phy
-    jsr hires.plot2
-    ply
-.endmacro
-
-
 setPlotAddr .macro
     phy
     jsr hires.setAddress
@@ -269,7 +262,7 @@ _nextCol
     beq _nextLine
 
     lda (LINE_PTR), y
-    ;eor #1
+    eor #1
     sta hires.setPixelArgs.col
     #plot
     iny

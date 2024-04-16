@@ -17,3 +17,5 @@ CTR_x_minus_1 = $A8
 CTR_x_plus_1  = $A9
 ZP_PLOT_PTR = $AA;$AB
 ZP_PLOT_PTR2 = $AC;$AD
+ZP_PLOT_PTR3 = $AE;$AF
+ZP_PLOT_PTR4 = $B0;$B1
