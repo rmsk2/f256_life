@@ -295,9 +295,10 @@ calcPtrs
     jsr hires.incAddr                                                      
     #savePlotParams ZP_PLOT_PTR2, PLOT_BANK2
 
-    inx
-    stx hires.setPixelArgs.y
-    jsr hires.setAddress
+    #move16Bit ZP_PLOT_PTR1, ZP_PLOT_PTR
+    lda PLOT_BANK1
+    sta hires.WINDOW_MMU_ADDR
+    jsr hires.newLineAddr
     #savePlotParams ZP_PLOT_PTR3, PLOT_BANK3
 
     jsr hires.incAddr                                                      
