@@ -95,6 +95,9 @@ mainMenu
     #printString MENU2, len(MENU2)
     #locate 10, 18
     #printString END, len(END)
+    #locate 7, 45
+    #printString TXT3, len(TXT3)
+
 _wait
     jsr waitForKey
     cmp #$31
@@ -121,7 +124,7 @@ MENU2 .text "      2 : Not so fast but bigger visualization"
 END   .text "RUN/STOP: Reset to BASIC"
 TXT1  .text "The start configuration is chosen at random with about 31% of living cells"
 TXT2  .text "Press any key to return to main menu"
-
+TXT3  .text "Find the source code at: https://github.com/rmsk2/f256_life"
 
 returnToBASIC    
     jsr sys64738
