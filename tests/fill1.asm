@@ -3,6 +3,8 @@
 
 jmp test
 
+.include "api.asm"
+.include "khelp.asm"
 .include "tests/test_global.asm"
 .include "setup.asm"
 .include "arith16.asm"

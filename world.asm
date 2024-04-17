@@ -126,12 +126,27 @@ setLinePtrs
     rts
 
 
-CANCEL_VECTOR .word dummyCancel
+CANCEL_VECTOR .word checkKey
 
 testInterrupt
     jmp (CANCEL_VECTOR)
 
 dummyCancel
+    clc
+    rts
+
+
+checkKey
+    lda kernel.args.events.pending ; Negated count
+    bpl _done
+    jsr kernel.NextEvent
+    bcs _done
+    lda myEvent.type    
+    cmp #kernel.event.key.PRESSED
+    bne _done
+    sec
+    rts
+_done
     clc
     rts
 
@@ -182,6 +197,14 @@ calcOneCell
     adc (UPPER_PTR), y
     adc (LOWER_PTR), y
     adc (LINE_PTR), y
+    bne _not_null
+    #mmuAlt
+    lda #0
+    ldy CTR_colCount
+    sta (LINE_PTR), y
+    #mmuAct
+    rts
+_not_null
     tax
 
     ldy CTR_colCount
@@ -233,9 +256,7 @@ HIRES_LAYER .byte 0
 
 
 plot .macro
-    phy
     jsr hires.plot
-    ply
 .endmacro
 
 
@@ -244,6 +265,95 @@ setPlotAddr .macro
     jsr hires.setAddress
     ply
 .endmacro
+
+savePlotParams .macro ptr, bank
+    #move16Bit ZP_PLOT_PTR, \ptr
+    lda hires.WINDOW_MMU_ADDR
+    sta \bank
+.endmacro
+
+
+saveBank .macro bank
+    lda hires.WINDOW_MMU_ADDR
+    sta \bank
+.endmacro
+
+restoreBank .macro bank
+    lda \bank
+    sta hires.WINDOW_MMU_ADDR
+.endmacro
+
+calcPtrs
+    stz hires.setPixelArgs.x
+    lda CTR_lineCount
+    asl
+    sta hires.setPixelArgs.y
+    tax
+    jsr hires.setAddress
+    #savePlotParams ZP_PLOT_PTR1, PLOT_BANK1
+
+    jsr hires.incAddr                                                      
+    #savePlotParams ZP_PLOT_PTR2, PLOT_BANK2
+
+    inx
+    stx hires.setPixelArgs.y
+    jsr hires.setAddress
+    #savePlotParams ZP_PLOT_PTR3, PLOT_BANK3
+
+    jsr hires.incAddr                                                      
+    #savePlotParams ZP_PLOT_PTR4, PLOT_BANK4
+    rts
+
+
+drawPic4x4   
+    stz CTR_lineCount
+    #load16BitImmediate WORLD_WINDOW, LINE_PTR 
+    stz hires.setPixelArgs.x+1   
+    jsr calcPtrs
+    ldy #0
+_nextIteration
+    lda CTR_lineCount
+    cmp #64
+    beq _doneDraw
+_nextCol
+    cpy #128
+    beq _nextLine
+    
+    lda (LINE_PTR), y
+    eor #3
+    sta hires.setPixelArgs.col
+
+    #restoreBank PLOT_BANK1
+    jsr hires.plot2_1
+    #saveBank PLOT_BANK1
+
+    #restoreBank PLOT_BANK2
+    jsr hires.plot2_2
+    #saveBank PLOT_BANK2
+
+    #restoreBank PLOT_BANK3
+    jsr hires.plot2_3
+    #saveBank PLOT_BANK3
+
+    #restoreBank PLOT_BANK4
+    jsr hires.plot2_4
+    #saveBank PLOT_BANK4
+ 
+    iny
+    bra _nextCol
+_nextLine
+    inc CTR_lineCount
+    jsr calcPtrs
+    ldy #0
+    #add16BitImmediate 128, LINE_PTR
+    jmp _nextIteration
+_doneDraw
+    rts
+
+
+drawOnly
+    jmp (DRAW_VEC)
+DRAW_VEC .word drawPic4x4
 
 
 drawPic    
@@ -263,7 +373,7 @@ _nextCol
     beq _nextLine
 
     lda (LINE_PTR), y
-    eor #1
+    eor #3
     sta hires.setPixelArgs.col
     #plot
     iny
@@ -291,7 +401,7 @@ draw
 _l0
     jsr hires.setLayer0Addr
 _goon
-    jsr drawPic
+    jsr drawOnly
 
     lda HIRES_LAYER
     beq _l0_2

@@ -76,13 +76,18 @@ init
     sta BITMAP_1_ADDR_MDL
     lda #`BITMAP_1_MEM
     sta BITMAP_1_ADDR_HI
+    #restoreIo
+    rts
 
+
+On
+    #saveIo
+    #setIo 0
     ; turn on graphics mode on and allow for displaying bitmap layers
     lda # BIT_BITMAP | BIT_GRAPH | BIT_OVERLY | BIT_TEXT
     sta VKY_MSTR_CTRL_0
     stz VKY_MSTR_CTRL_1
     #restoreIo
-
     rts
 
 
@@ -213,7 +218,7 @@ inc16bit_2 .macro memAddr2
 plot
     lda setPixelArgs.col
     sta (ZP_PLOT_PTR)
-
+incAddr
     #inc16bit ZP_PLOT_PTR
     lda ZP_PLOT_PTR+1
     and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
@@ -223,6 +228,39 @@ plot
     sta ZP_PLOT_PTR+1
     inc WINDOW_MMU_ADDR
 _done
+    rts
+
+
+mplot2 .macro ptr
+    lda setPixelArgs.col
+    sta (\ptr)
+
+    #inc16bit_2 \ptr
+    lda \ptr+1
+    and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
+    bne _done
+    lda \ptr+1
+    eor #%01100000
+    sta \ptr+1
+    inc WINDOW_MMU_ADDR
+_done
+.endmacro
+
+
+plot2_1
+    #mplot2 ZP_PLOT_PTR1
+    rts
+
+plot2_2
+    #mplot2 ZP_PLOT_PTR2
+    rts
+
+plot2_3
+    #mplot2 ZP_PLOT_PTR3
+    rts
+
+plot2_4
+    #mplot2 ZP_PLOT_PTR4
     rts
 
 

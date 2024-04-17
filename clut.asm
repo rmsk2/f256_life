@@ -15,8 +15,8 @@ restoreIo .macro
 
 GFX_BLACK = 0
 GFX_WHITE = 1
-GFX_RED = 3
-GFX_GREEN = 4
+GFX_RED = 4
+GFX_GREEN = 3
 GFX_BLUE = 2
 
 TXT_BLACK = 0

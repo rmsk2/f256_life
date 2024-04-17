@@ -1,6 +1,6 @@
 RM=rm
 PORT=/dev/ttyUSB0
-SUDO=
+SUDO=sudo
 
 BINARY=f256_life
 FORCE=-f
