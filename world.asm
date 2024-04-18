@@ -119,13 +119,6 @@ fill
     jmp iterateOverWorld
 
 
-setLinePtrs
-    #load16BitImmediate WORLD_WINDOW, LINE_PTR
-    #load16BitImmediate UPPER_WINDOW, UPPER_PTR
-    #load16BitImmediate LOWER_WINDOW, LOWER_PTR
-    rts
-
-
 CANCEL_VECTOR .word checkKey
 
 testInterrupt
@@ -148,6 +141,21 @@ checkKey
     rts
 _done
     clc
+    rts
+
+
+setLinePtrs
+    #load16BitImmediate WORLD_WINDOW, LINE_PTR
+    #load16BitImmediate UPPER_WINDOW, UPPER_PTR
+    #load16BitImmediate LOWER_WINDOW, LOWER_PTR
+
+    ldy #$7F
+    lda #0
+    clc
+    adc (UPPER_PTR), y
+    adc (LOWER_PTR), y
+    adc (LINE_PTR), y
+    sta LEFT_COUNT
     rts
 
 
@@ -178,44 +186,34 @@ calcOneCell
     and #$7F
     sta CTR_x_plus_1
 
-    lda CTR_colCount
-    dea
-    and #$7F
-    sta CTR_x_minus_1
-
     ; count living neighbours
-    lda #0
     clc
+    lda #0
     ldy CTR_colCount
     adc (UPPER_PTR), y
     adc (LOWER_PTR), y
-    ldy CTR_x_minus_1
-    adc (UPPER_PTR), y
-    adc (LOWER_PTR), y
-    adc (LINE_PTR), y
+    pha
+    adc LEFT_COUNT
     ldy CTR_x_plus_1
     adc (UPPER_PTR), y
     adc (LOWER_PTR), y
     adc (LINE_PTR), y
-    bne _not_null
-    #mmuAlt
-    lda #0
-    ldy CTR_colCount
-    sta (LINE_PTR), y
-    #mmuAct
-    rts
-_not_null
     tax
 
     ldy CTR_colCount
     lda (LINE_PTR), y
     beq _currentlyDead
+    pla
+    ina
+    sta LEFT_COUNT    
     #mmuAlt
     lda TAB_ALIVE, x
     sta (LINE_PTR), y
     #mmuAct
     rts
 _currentlyDead
+    pla
+    sta LEFT_COUNT
     #mmuAlt
     lda TAB_DEAD, x
     sta (LINE_PTR), y
@@ -260,12 +258,6 @@ plot .macro
 .endmacro
 
 
-setPlotAddr .macro
-    phy
-    jsr hires.setAddress
-    ply
-.endmacro
-
 savePlotParams .macro ptr, bank
     #move16Bit ZP_PLOT_PTR, \ptr
     lda hires.WINDOW_MMU_ADDR
@@ -283,32 +275,36 @@ restoreBank .macro bank
     sta hires.WINDOW_MMU_ADDR
 .endmacro
 
+
 calcPtrs
-    stz hires.setPixelArgs.x
-    lda CTR_lineCount
-    asl
-    sta hires.setPixelArgs.y
-    tax
+    stz hires.setPixelArgs.y
     jsr hires.setAddress
     #savePlotParams ZP_PLOT_PTR1, PLOT_BANK1
 
-    jsr hires.incAddr                                                      
-    #savePlotParams ZP_PLOT_PTR2, PLOT_BANK2
-
-    #move16Bit ZP_PLOT_PTR1, ZP_PLOT_PTR
-    lda PLOT_BANK1
-    sta hires.WINDOW_MMU_ADDR
     jsr hires.newLineAddr
     #savePlotParams ZP_PLOT_PTR3, PLOT_BANK3
 
-    jsr hires.incAddr                                                      
-    #savePlotParams ZP_PLOT_PTR4, PLOT_BANK4
+    rts
+
+
+update4x4Pointers
+    #move16Bit ZP_PLOT_PTR1, ZP_PLOT_PTR
+    lda PLOT_BANK1
+    sta hires.WINDOW_MMU_ADDR
+    
+    jsr hires.newLineAddrPartial4x4
+    #savePlotParams ZP_PLOT_PTR1, PLOT_BANK1
+
+    jsr hires.newLineAddr
+    #savePlotParams ZP_PLOT_PTR3, PLOT_BANK3    
+
     rts
 
 
 drawPic4x4   
     stz CTR_lineCount
-    #load16BitImmediate WORLD_WINDOW, LINE_PTR 
+    #load16BitImmediate WORLD_WINDOW, LINE_PTR
+    stz hires.setPixelArgs.x 
     stz hires.setPixelArgs.x+1   
     jsr calcPtrs
     ldy #0
@@ -325,26 +321,20 @@ _nextCol
     sta hires.setPixelArgs.col
 
     #restoreBank PLOT_BANK1
-    jsr hires.plot2_1
+    jsr hires.plot1
+    jsr hires.plot1
     #saveBank PLOT_BANK1
 
-    #restoreBank PLOT_BANK2
-    jsr hires.plot2_2
-    #saveBank PLOT_BANK2
-
     #restoreBank PLOT_BANK3
-    jsr hires.plot2_3
+    jsr hires.plot3
+    jsr hires.plot3
     #saveBank PLOT_BANK3
-
-    #restoreBank PLOT_BANK4
-    jsr hires.plot2_4
-    #saveBank PLOT_BANK4
  
     iny
     bra _nextCol
 _nextLine
     inc CTR_lineCount
-    jsr calcPtrs
+    jsr update4x4Pointers
     ldy #0
     #add16BitImmediate 128, LINE_PTR
     jmp _nextIteration
@@ -375,16 +365,12 @@ _nextCol
 
     lda (LINE_PTR), y
     eor #3
-    sta hires.setPixelArgs.col
     #plot
     iny
     bra _nextCol
 _nextLine
     inc CTR_lineCount
-    lda CTR_lineCount
-    sta hires.setPixelArgs.y
-    stz hires.setPixelArgs.x
-    #setPlotAddr
+    jsr hires.newLineAddrPartial
     ldy #0
     #add16BitImmediate 128, LINE_PTR
     jmp _nextIteration

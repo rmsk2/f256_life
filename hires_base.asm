@@ -203,52 +203,7 @@ backgroundColor .byte 0
 setPixelArgs .dstruct strSetPixelArgs
 
 
-inc16bit_2 .macro memAddr2 
-    clc
-    ; add lo bytes
-    lda #2
-    adc \memAddr2
-    sta \memAddr2
-    lda \memAddr2+1
-    adc #0
-    sta \memAddr2+1
-.endmacro
-
-
-plot
-    lda setPixelArgs.col
-    sta (ZP_PLOT_PTR)
-incAddr
-    #inc16bit ZP_PLOT_PTR
-    lda ZP_PLOT_PTR+1
-    and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
-    bne _done
-    lda ZP_PLOT_PTR+1
-    eor #%01100000
-    sta ZP_PLOT_PTR+1
-    inc WINDOW_MMU_ADDR
-_done
-    rts
-
-
-newLineAddr
-    #add16BitImmediate 320, ZP_PLOT_PTR
-    lda ZP_PLOT_PTR+1
-    and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
-    bne _done
-    lda ZP_PLOT_PTR+1
-    eor #%01100000
-    sta ZP_PLOT_PTR+1
-    inc WINDOW_MMU_ADDR
-_done
-    rts
-
-
-mplot2 .macro ptr
-    lda setPixelArgs.col
-    sta (\ptr)
-
-    #inc16bit_2 \ptr
+mcheckOverflow .macro ptr
     lda \ptr+1
     and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
     bne _done
@@ -260,36 +215,45 @@ _done
 .endmacro
 
 
-plot2_1
-    #mplot2 ZP_PLOT_PTR1
-    rts
+mplot .macro ptr
+    sta (\ptr)
+    #inc16Bit \ptr
+    #mcheckOverflow \ptr
+.endmacro
 
-plot2_2
-    #mplot2 ZP_PLOT_PTR2
-    rts
 
-plot2_3
-    #mplot2 ZP_PLOT_PTR3
-    rts
-
-plot2_4
-    #mplot2 ZP_PLOT_PTR4
+plot
+    #mplot ZP_PLOT_PTR
     rts
 
 
-plot2
+plot1
     lda setPixelArgs.col
-    sta (ZP_PLOT_PTR)
+    #mplot ZP_PLOT_PTR1
+    rts
 
-    #inc16bit_2 ZP_PLOT_PTR
-    lda ZP_PLOT_PTR+1
-    and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
-    bne _done
-    lda ZP_PLOT_PTR+1
-    eor #%01100000
-    sta ZP_PLOT_PTR+1
-    inc WINDOW_MMU_ADDR
-_done
+
+plot3
+    lda setPixelArgs.col
+    #mplot ZP_PLOT_PTR3
+    rts
+
+
+newLineAddr
+    #add16BitImmediate 320, ZP_PLOT_PTR
+    #mcheckOverflow ZP_PLOT_PTR
+    rts
+
+
+newLineAddrPartial
+    #add16BitImmediate 320-128, ZP_PLOT_PTR
+    #mcheckOverflow ZP_PLOT_PTR
+    rts
+
+
+newLineAddrPartial4x4
+    #add16BitImmediate 640-256, ZP_PLOT_PTR
+    #mcheckOverflow ZP_PLOT_PTR
     rts
 
 
@@ -339,63 +303,6 @@ setAddress
 _writeColor    
     #setWindow
     rts
-
-
-; --------------------------------------------------
-; This routine sets a pixel in the bitmap using XPOS, YPOS and
-; COLOR from above
-;--------------------------------------------------
-setPixel
-    ; multiply 320 and y position
-    ; multiplication result is stored at $DE04-$DE07
-    lda setPixelArgs.y
-    sta $DE00
-    stz $DE01
-    #load16BitImmediate 320, $DE02
-
-    ; calculate (320 * YPOS) + XPOS    
-    ; 24 bit result is in ZP_GRAPHIC_PTR GRAPHIC_ADDRESS GRAPHIC_ADDRESS+1
-    clc
-    lda MUL_RES_CO_PROC
-    adc setPixelArgs.x
-    sta ZP_GRAPHIC_PTR
-    lda MUL_RES_CO_PROC+1
-    adc setPixelArgs.x+1
-    sta GRAPHIC_ADDRESS
-    lda #0
-    adc MUL_RES_CO_PROC+2
-    sta GRAPHIC_ADDRESS+1
-
-    ; get address in 8K window => look at lower 13 bits
-    ; caclulate ((320 * YPOS + XPOS) MOD 8192) + BITMAP_WINDOW
-    lda GRAPHIC_ADDRESS
-    and #%00011111
-    clc 
-    adc #>BITMAP_WINDOW
-    sta ZP_GRAPHIC_PTR+1
-
-    ; determine 8K window to write to
-    ; calculate (320 * YPOS + XPOS) DIV 8192
-    ; get lower three bits 
-    lda GRAPHIC_ADDRESS
-    lsr
-    lsr 
-    lsr 
-    lsr
-    lsr 
-    ; get most significant bit for bitmap window 
-    ; GRAPHIC_ADDRESS+1 can either be zero or one
-    ldy GRAPHIC_ADDRESS+1
-    beq _writeColor
-    ora #8
-_writeColor    
-    #setWindow
-    ; set pixel
-    lda setPixelArgs.col
-    sta (ZP_GRAPHIC_PTR)
-
-    rts
-
 
 ;------------------------------------------------------------------
 
