@@ -180,7 +180,7 @@ _updateMain
 TAB_ALIVE .byte 0, 0, 1, 1, 0, 0, 0, 0, 0
 TAB_DEAD  .byte 0, 0, 0, 1, 0, 0, 0, 0, 0
 
-calcOneCell
+mcalcOneCell .macro
     lda CTR_colCount
     ina
     and #$7F
@@ -210,7 +210,7 @@ calcOneCell
     lda TAB_ALIVE, x
     sta (LINE_PTR), y
     #mmuAct
-    rts
+    bra _endCalcOne
 _currentlyDead
     pla
     sta LEFT_COUNT
@@ -218,6 +218,11 @@ _currentlyDead
     lda TAB_DEAD, x
     sta (LINE_PTR), y
     #mmuAct
+_endCalcOne
+.endmacro
+
+calcOneCell
+    #mcalcOneCell
     rts
 
 
@@ -233,7 +238,7 @@ _nextCol
     lda CTR_colCount
     cmp #128
     beq _nextLine
-    jsr calcOneCell
+    #mcalcOneCell
     inc CTR_colCount
     bra _nextCol
 _nextLine
@@ -253,11 +258,6 @@ _done2
 HIRES_LAYER .byte 0
 
 
-plot .macro
-    jsr hires.plot
-.endmacro
-
-
 savePlotParams .macro ptr, bank
     #move16Bit ZP_PLOT_PTR, \ptr
     lda hires.WINDOW_MMU_ADDR
@@ -265,38 +265,20 @@ savePlotParams .macro ptr, bank
 .endmacro
 
 
-saveBank .macro bank
-    lda hires.WINDOW_MMU_ADDR
-    sta \bank
-.endmacro
-
-restoreBank .macro bank
-    lda \bank
-    sta hires.WINDOW_MMU_ADDR
-.endmacro
-
-
 calcPtrs
     stz hires.setPixelArgs.y
     jsr hires.setAddress
-    #savePlotParams ZP_PLOT_PTR1, PLOT_BANK1
+    #move16Bit ZP_PLOT_PTR, ZP_PLOT_PTR1
 
-    jsr hires.newLineAddr
-    #savePlotParams ZP_PLOT_PTR3, PLOT_BANK3
+    #load16BitImmediate hires.ALT_BITMAP_WINDOW, ZP_PLOT_PTR3
+    jsr hires.newLineAddr4x4_6000
 
     rts
 
 
-update4x4Pointers
-    #move16Bit ZP_PLOT_PTR1, ZP_PLOT_PTR
-    lda PLOT_BANK1
-    sta hires.WINDOW_MMU_ADDR
-    
-    jsr hires.newLineAddrPartial4x4
-    #savePlotParams ZP_PLOT_PTR1, PLOT_BANK1
-
-    jsr hires.newLineAddr
-    #savePlotParams ZP_PLOT_PTR3, PLOT_BANK3    
+update4x4Pointers    
+    jsr hires.newLineAddrPartial4x4_A000
+    jsr hires.newLineAddrPartial4x4_6000
 
     rts
 
@@ -311,27 +293,24 @@ drawPic4x4
 _nextIteration
     lda CTR_lineCount
     cmp #64
-    beq _doneDraw
+    bne _nextCol
+    jmp _doneDraw
 _nextCol
     cpy #128
-    beq _nextLine
-    
+    bne _doDraw
+    jmp _nextLine
+_doDraw
     lda (LINE_PTR), y
     eor #3
     sta hires.setPixelArgs.col
 
-    #restoreBank PLOT_BANK1
-    jsr hires.plot1
-    jsr hires.plot1
-    #saveBank PLOT_BANK1
+    #mplot1
+    #mplot1
+    #mplot3
+    #mplot3
 
-    #restoreBank PLOT_BANK3
-    jsr hires.plot3
-    jsr hires.plot3
-    #saveBank PLOT_BANK3
- 
     iny
-    bra _nextCol
+    jmp _nextCol
 _nextLine
     inc CTR_lineCount
     jsr update4x4Pointers
@@ -365,7 +344,7 @@ _nextCol
 
     lda (LINE_PTR), y
     eor #3
-    #plot
+    #mplot_A000 ZP_PLOT_PTR
     iny
     bra _nextCol
 _nextLine

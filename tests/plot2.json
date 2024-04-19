@@ -1,0 +1,5 @@
+{
+    "Name": "Plot test for 6000 window",
+    "TestDriverSource": "plot2.asm",
+    "TestScript": "plot2.lua"
+}

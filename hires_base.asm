@@ -1,3 +1,53 @@
+mcheckOverflow_A000 .macro ptr
+    lda \ptr+1
+    and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
+    bne _done
+    lda \ptr+1
+    eor #%01100000
+    sta \ptr+1
+    inc hires.WINDOW_MMU_ADDR
+_done
+.endmacro
+
+
+mcheckOverflow_6000 .macro ptr
+    lda \ptr+1
+    and #%10000000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
+    beq _done
+    lda \ptr+1
+    eor #%11100000
+    sta \ptr+1
+    inc hires.ALT_WINDOW_MMU_ADDR
+_done
+.endmacro
+
+
+mplot_A000 .macro ptr
+    sta (\ptr)
+    #inc16Bit \ptr
+    #mcheckOverflow_A000 \ptr
+.endmacro
+
+
+mplot_6000 .macro ptr
+    sta (\ptr)
+    #inc16Bit \ptr
+    #mcheckOverflow_6000 \ptr
+.endmacro
+
+
+mplot1 .macro
+    lda hires.setPixelArgs.col
+    #mplot_A000 ZP_PLOT_PTR1
+.endmacro
+
+
+mplot3 .macro
+    lda hires.setPixelArgs.col
+    #mplot_6000 ZP_PLOT_PTR3
+.endmacro
+
+
 hires .namespace
 
 MMU_IO_CTRL = $0001
@@ -22,9 +72,13 @@ BITMAP_2_ENABLE = $D110
 BITMAP_0_MEM = $40000
 BITMAP_1_MEM = $20000
 BITMAP_WINDOW = $A000
+ALT_BITMAP_WINDOW = $6000
 
 WINDOW_8K_BLOCK = BITMAP_WINDOW / 8192
 WINDOW_MMU_ADDR = WINDOW_8K_BLOCK + 8
+
+ALT_WINDOW_8K_BLOCK = ALT_BITMAP_WINDOW / 8192
+ALT_WINDOW_MMU_ADDR = ALT_WINDOW_8K_BLOCK + 8
 
 ; Change to $DE04 when building for a F256 Jr. Rev B using factory settings
 MUL_RES_CO_PROC = $DE10
@@ -203,57 +257,44 @@ backgroundColor .byte 0
 setPixelArgs .dstruct strSetPixelArgs
 
 
-mcheckOverflow .macro ptr
-    lda \ptr+1
-    and #%00100000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
-    bne _done
-    lda \ptr+1
-    eor #%01100000
-    sta \ptr+1
-    inc WINDOW_MMU_ADDR
-_done
-.endmacro
-
-
-mplot .macro ptr
-    sta (\ptr)
-    #inc16Bit \ptr
-    #mcheckOverflow \ptr
-.endmacro
-
-
 plot
-    #mplot ZP_PLOT_PTR
+    #mplot_A000 ZP_PLOT_PTR
     rts
 
-
-plot1
-    lda setPixelArgs.col
-    #mplot ZP_PLOT_PTR1
-    rts
-
-
-plot3
-    lda setPixelArgs.col
-    #mplot ZP_PLOT_PTR3
+plot_6000
+    #mplot_6000 ZP_PLOT_PTR
     rts
 
 
 newLineAddr
     #add16BitImmediate 320, ZP_PLOT_PTR
-    #mcheckOverflow ZP_PLOT_PTR
+    #mcheckOverflow_A000 ZP_PLOT_PTR
     rts
 
 
 newLineAddrPartial
     #add16BitImmediate 320-128, ZP_PLOT_PTR
-    #mcheckOverflow ZP_PLOT_PTR
+    #mcheckOverflow_A000 ZP_PLOT_PTR
     rts
 
 
-newLineAddrPartial4x4
-    #add16BitImmediate 640-256, ZP_PLOT_PTR
-    #mcheckOverflow ZP_PLOT_PTR
+newLineAddr4x4_6000
+    lda WINDOW_MMU_ADDR
+    sta ALT_WINDOW_MMU_ADDR
+    #add16BitImmediate 320, ZP_PLOT_PTR3
+    #mcheckOverflow_6000 ZP_PLOT_PTR3
+    rts
+
+
+newLineAddrPartial4x4_A000
+    #add16BitImmediate 384, ZP_PLOT_PTR1
+    #mcheckOverflow_A000 ZP_PLOT_PTR1
+    rts
+
+
+newLineAddrPartial4x4_6000
+    #add16BitImmediate 384, ZP_PLOT_PTR3
+    #mcheckOverflow_6000 ZP_PLOT_PTR3
     rts
 
 
