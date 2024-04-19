@@ -12,7 +12,7 @@ _done
 
 mcheckOverflow_6000 .macro ptr
     lda \ptr+1
-    and #%10000000                                                     ; overflow wrt to the window occurred, this only works in bank $A000
+    and #%10000000                                                     ; overflow wrt to the window occurred, this only works in bank $6000
     beq _done
     lda \ptr+1
     eor #%11100000
