@@ -1,0 +1,5 @@
+{
+    "Name": "Test flipping a cell",
+    "TestDriverSource": "flip1.asm",
+    "TestScript": "flip1.lua"
+}
