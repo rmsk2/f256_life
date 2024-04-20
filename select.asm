@@ -1,13 +1,15 @@
 select .namespace
 
 TXT5  .text "Choose a start configuration manually"
-TXT6  .text "Press any key other to return to main menu"
+TXT6  .text "Press any other key to return to main menu"
 TXT7  .text "Press F7 to start calculation in fast mode"
 TXT8  .text "Press F5 to start calculation in normal mode"
 TXT10 .text "Press F3 to switch to to erase pixel mode"
 TXT9  .text "Press F1 to switch to draw pixel mode"
 MODE_DRAW  .text "DRAW "
 MODE_ERASE .text "ERASE"
+MODE_TEXT  .text "Mode"
+MODE_ULINE .text "===="
 
 doSelect
     #setCol (TXT_BLUE << 4) | (TXT_WHITE)
@@ -33,18 +35,24 @@ doSelect
     #printString HEADER_U, len(HEADER_U)
     #locate 0, 40
     #printString TXT5, len(TXT5)
-    #locate 0, 42 
-    #printString TXT8, len(TXT8)
     #locate 0, 44 
-    #printString TXT7, len(TXT7)
+    #printString TXT8, len(TXT8)
     #locate 0, 46 
+    #printString TXT7, len(TXT7)
+    #locate 0, 48 
     #printString TXT6, len(TXT6)
-    #locate 0, 48
+    #locate 0, 50
     #printString TXT9, len(TXT9)
-    #locate 0, 50 
+    #locate 0, 52 
     #printString TXT10, len(TXT10)
     #locate 68,4
     #printString MODE_DRAW, len(MODE_DRAW)
+
+    #locate 68,3
+    #printString MODE_ULINE, len(MODE_ULINE)
+    #locate 68,2
+    #printString MODE_TEXT, len(MODE_TEXT)
+
 
     jsr eventLoop
     
