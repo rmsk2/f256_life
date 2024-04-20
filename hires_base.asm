@@ -345,6 +345,13 @@ _writeColor
     #setWindow
     rts
 
+
+setPixel
+    jsr setAddress
+    lda setPixelArgs.col
+    sta (ZP_PLOT_PTR)
+    rts
+
 ;------------------------------------------------------------------
 
 setWindow .macro

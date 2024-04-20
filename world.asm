@@ -1,3 +1,9 @@
+CellCoord_t .struct
+    x .byte 0
+    y .byte 0
+.endstruct
+
+
 world .namespace 
 
 WORLD_0_ADDR = $10000
@@ -141,6 +147,31 @@ checkKey
     rts
 _done
     clc
+    rts
+
+COORD .dstruct CellCoord_t
+TEMP_X .word 0
+
+; returns state 0 or 1
+flipCell
+    ; multiply 128 and y position
+    ; multiplication result is stored at $DE04-$DE07
+    lda COORD.y
+    and #$3F
+    sta $DE00
+    stz $DE01
+    #load16BitImmediate 128, $DE02
+    #move16Bit $DE10, LINE_PTR
+    
+    stz TEMP_X+1
+    lda COORD.x
+    and #$7F
+    sta TEMP_X
+    #add16Bit TEMP_X, LINE_PTR
+    #add16BitImmediate WORLD_WINDOW, LINE_PTR
+    lda (LINE_PTR)
+    eor #1
+    sta (LINE_PTR)
     rts
 
 

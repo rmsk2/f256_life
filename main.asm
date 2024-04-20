@@ -13,6 +13,7 @@ jmp main
 .include "random.asm"
 .include "txtio.asm"
 .include "world.asm"
+.include "select.asm"
 
 
 main
@@ -35,6 +36,7 @@ _restart
     jsr txtio.home
 
     jsr mainMenu
+    bcs _restart
     jsr txtio.clear
 
     lda #GFX_WHITE
@@ -94,6 +96,8 @@ mainMenu
     #locate 10, 14
     #printString MENU2, len(MENU2)
     #locate 10, 18
+    #printString MENU3, len(MENU3)
+    #locate 10, 22
     #printString END, len(END)
     #locate 7, 45
     #printString TXT3, len(TXT3)
@@ -103,11 +107,18 @@ _wait
     cmp #$31
     bne _checkBig
     #load16BitImmediate world.drawPic, world.DRAW_VEC
+    clc
     rts
 _checkBig
     cmp #$32
-    bne _checkStop
+    bne _checkManual
     #load16BitImmediate world.drawPic4x4, world.DRAW_VEC
+    clc
+    rts
+_checkManual
+    cmp #$33
+    bne _checkStop
+    jsr select.doSelect
     rts
 _checkStop
     cmp #3
@@ -121,6 +132,7 @@ HEADER   .text "Conway's game of life: A cellular automaton"
 HEADER_U .text "==========================================="
 MENU1 .text "      1 : Fast but small visualization"
 MENU2 .text "      2 : Not so fast but bigger visualization"
+MENU3 .text "      3 : Select start configuration"
 END   .text "RUN/STOP: Reset to BASIC"
 TXT1  .text "The start configuration is chosen at random with about 31% of living cells"
 TXT2  .text "Press any key to return to main menu"
