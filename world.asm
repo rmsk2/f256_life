@@ -198,6 +198,13 @@ setLinePtrs
     #load16BitImmediate UPPER_WINDOW, UPPER_PTR
     #load16BitImmediate LOWER_WINDOW, LOWER_PTR
 
+    ldy #$7F
+    clc
+    lda (UPPER_PTR), y
+    adc (LOWER_PTR), y
+    adc (LINE_PTR), y
+    sta LEFT_COUNT
+
     rts
 
 
@@ -217,6 +224,14 @@ _checkLower
     #load16BitImmediate WORLD_WINDOW, LOWER_PTR
 _updateMain
     #add16BitImmediate 128, LINE_PTR
+
+    ldy #$7F
+    clc
+    lda (UPPER_PTR), y
+    adc (LOWER_PTR), y
+    adc (LINE_PTR), y
+    sta LEFT_COUNT
+
     rts
 
 TAB_ALIVE .byte 0, 0, 1, 1, 0, 0, 0, 0, 0
@@ -228,35 +243,33 @@ mcalcOneCell .macro
     and #$7F
     sta CTR_x_plus_1
 
-    lda CTR_colCount
-    dea
-    and #$7F
-    sta CTR_x_minus_1
-
     ; count living neighbours
     clc
-    lda #0
-    ldy CTR_x_minus_1
-    adc (UPPER_PTR), y
+    ldy CTR_colCount    
+    lda (UPPER_PTR), y
     adc (LOWER_PTR), y
-    adc (LINE_PTR), y
+    pha
+    adc LEFT_COUNT
     ldy CTR_x_plus_1
     adc (UPPER_PTR), y
     adc (LOWER_PTR), y
     adc (LINE_PTR), y
-    ldy CTR_colCount
-    adc (UPPER_PTR), y
-    adc (LOWER_PTR), y
     tax
 
+    ldy CTR_colCount
     lda (LINE_PTR), y
     beq _currentlyDead
+    pla
+    ina
+    sta LEFT_COUNT
     #mmuAlt
     lda TAB_ALIVE, x
     sta (LINE_PTR), y
     #mmuAct
     bra _endCalcOne
 _currentlyDead
+    pla
+    sta LEFT_COUNT
     #mmuAlt
     lda TAB_DEAD, x
     sta (LINE_PTR), y
