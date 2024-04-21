@@ -211,11 +211,11 @@ BUTTON_STATE   .byte 0
 
 THRESHOLD_X .byte 7
 OFFSET_SLOW_X .byte 4
-OFFSET_FAST_X .byte 8
+OFFSET_FAST_X .byte 12
 
 THRESHOLD_Y .byte 6
 OFFSET_SLOW_Y .byte 4
-OFFSET_FAST_Y .byte 8
+OFFSET_FAST_Y .byte 12
 
 
 evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr
@@ -266,12 +266,20 @@ drawPixel
     #halve16Bit POS_TEMP
     #halve16Bit POS_TEMP
     lda POS_TEMP
+    cmp #128
+    bne _valid
+    lda #127
+_valid
     sta world.COORD.x
 
     #move16Bit $D6E4, POS_TEMP
     #halve16Bit POS_TEMP
     #halve16Bit POS_TEMP
     lda POS_TEMP
+    cmp #64
+    bne _valid2
+    lda #63
+_valid2
     sta world.COORD.y
     
     jsr modifyCell
@@ -328,12 +336,12 @@ _setXPos0
 _right
     #move16Bit $D6E2, POS_TEMP
     #add16Bit OFFSET, POS_TEMP
-    #cmp16BitImmediate X_MAX-1, POS_TEMP
+    #cmp16BitImmediate X_MAX, POS_TEMP
     bcc _setXPosMax
     #move16Bit POS_TEMP, $D6E2
     bra _done
 _setXPosMax
-    #load16BitImmediate X_MAX-1, $D6E2
+    #load16BitImmediate X_MAX, $D6E2
 _done
     lda BUTTON_STATE
     cmp #BUTTON_IS_NOT_PRESSED
@@ -365,12 +373,12 @@ _setYPos0
 _down
     #move16Bit $D6E4, POS_TEMP
     #add16Bit OFFSET, POS_TEMP
-    #cmp16BitImmediate Y_MAX-1, POS_TEMP
+    #cmp16BitImmediate Y_MAX, POS_TEMP
     bcc _setYPosMax
     #move16Bit POS_TEMP, $D6E4
     bra _done
 _setYPosMax
-    #load16BitImmediate Y_MAX-1, $D6E4
+    #load16BitImmediate Y_MAX, $D6E4
 _done
     lda BUTTON_STATE
     cmp #BUTTON_IS_NOT_PRESSED
