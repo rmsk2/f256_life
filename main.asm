@@ -60,6 +60,8 @@ _wait
     cmp #$31
     bne _checkBig
     #load16BitImmediate world.drawPic, world.DRAW_VEC
+    lda #1
+    sta DO_RANDOM_FILL
     jsr performCalculation
     clc
     rts
@@ -67,12 +69,15 @@ _checkBig
     cmp #$32
     bne _checkManual
     #load16BitImmediate world.drawPic4x4, world.DRAW_VEC
+    lda #1
+    sta DO_RANDOM_FILL
     jsr performCalculation
     clc
     rts
 _checkManual
     cmp #$33
     bne _checkStop
+    stz DO_RANDOM_FILL
     jsr select.doSelect
     rts
 _checkStop
@@ -81,6 +86,8 @@ _checkStop
     jmp returnToBASIC
     rts
 
+
+DO_RANDOM_FILL .byte 0
 
 performCalculation
     jsr txtio.clear
@@ -99,57 +106,13 @@ performCalculation
     #locate 15, 36
     #printString HEADER_U, len(HEADER_U)
     #locate 0, 40
-    #printString TXT1, len(TXT1)
-    #locate 0, 44 
-    #printString TXT2, len(TXT2)
-
-    #locate 68,3
-    #printString GEN_TXT, len(GEN_TXT)
-    #locate 68,4
-    #printString GENU_TXT, len(GENU_TXT)
-    #locate 68, 5
-    lda #36
-    jsr txtio.charOut
-
-    jsr world.fill
-    jsr hires.setLayer0Addr
-    jsr world.drawOnly
-    jsr hires.setLayer0
-    jsr hires.on
-_doCalc
-    jsr world.calcOneRound
-    bcs _done
-    jsr world.draw
-    #inc16Bit GENERATION
-    #locate 69,5
-    lda GENERATION+1
-    jsr txtio.printByte
-    lda GENERATION
-    jsr txtio.printByte
-    bra _doCalc
-_done
-    jsr hires.Off
-    rts
-
-
-performManualConfig
-    jsr txtio.clear
-
-    lda #GFX_WHITE
-    sta hires.backgroundColor    
-    jsr hires.setLayer0Addr
-    jsr hires.clearBitmap
-    jsr hires.setLayer1Addr
-    jsr hires.clearBitmap    
-
-    jsr txtio.clear
-
-    #locate 15, 35
-    #printString HEADER, len(HEADER)
-    #locate 15, 36
-    #printString HEADER_U, len(HEADER_U)
-    #locate 0, 40
+    lda DO_RANDOM_FILL
+    bne _randText
     #printString TXT4, len(TXT4)
+    bra _continue
+_randText
+    #printString TXT1, len(TXT1)
+_continue
     #locate 0, 44 
     #printString TXT2, len(TXT2)
 
@@ -161,6 +124,10 @@ performManualConfig
     lda #36
     jsr txtio.charOut
 
+    lda DO_RANDOM_FILL
+    beq _noFill
+    jsr world.fill
+_noFill
     jsr hires.setLayer0Addr
     jsr world.drawOnly
     jsr hires.setLayer0
@@ -179,6 +146,7 @@ _doCalc
 _done
     jsr hires.Off
     rts
+
 
 GEN_TXT  .text "Generation"
 GENU_TXT .text "=========="

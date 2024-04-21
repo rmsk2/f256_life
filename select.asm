@@ -10,6 +10,8 @@ MODE_DRAW  .text "DRAW "
 MODE_ERASE .text "ERASE"
 MODE_TEXT  .text "Mode"
 MODE_ULINE .text "===="
+TXT_X .text "X: $"
+TXT_Y .text "Y: $"
 
 doSelect
     #setCol (TXT_BLUE << 4) | (TXT_WHITE)
@@ -48,11 +50,16 @@ doSelect
     #locate 68,4
     #printString MODE_DRAW, len(MODE_DRAW)
 
+    #locate 68,6
+    #printString TXT_X, len(TXT_X)
+    #locate 68,7
+    #printString TXT_Y, len(TXT_Y)
+
     #locate 68,3
     #printString MODE_ULINE, len(MODE_ULINE)
     #locate 68,2
     #printString MODE_TEXT, len(MODE_TEXT)
-
+    jsr drawMousePos
 
     jsr eventLoop
     
@@ -135,14 +142,15 @@ _start4x4
     bne _start1x1
     jsr mouseOff
     #load16BitImmediate world.drawPic4x4, world.DRAW_VEC
-    jsr performManualConfig
+    jsr performCalculation
+
     bra _exit
 _start1x1
     cmp #$87
     bne _exit
     jsr mouseOff
     #load16BitImmediate world.drawPic, world.DRAW_VEC
-    jsr performManualConfig
+    jsr performCalculation
 _exit
     sec
 _done
@@ -156,6 +164,25 @@ procMouseEvent
     jsr mouseLeftRight
     jsr mouseUpDown
     #restoreIo
+    jsr drawMousePos
+    rts
+
+
+drawMousePos
+    #move16Bit $D6E2, POS_TEMP
+    #halve16Bit POS_TEMP
+    #halve16Bit POS_TEMP    
+    #locate 72, 6
+    lda POS_TEMP
+    jsr txtio.printByte
+
+
+    #move16Bit $D6E4, POS_TEMP
+    #halve16Bit POS_TEMP
+    #halve16Bit POS_TEMP
+    #locate 72, 7
+    lda POS_TEMP
+    jsr txtio.printByte
     rts
 
 
@@ -182,13 +209,13 @@ OFFSET         .byte 0, 0
 PRIMARY_BUTTON .byte LEFT_BUTTON
 BUTTON_STATE   .byte 0
 
-THRESHOLD_X .byte 5
-OFFSET_SLOW_X .byte 2
-OFFSET_FAST_X .byte 10
+THRESHOLD_X .byte 7
+OFFSET_SLOW_X .byte 4
+OFFSET_FAST_X .byte 8
 
-THRESHOLD_Y .byte 4
-OFFSET_SLOW_Y .byte 2
-OFFSET_FAST_Y .byte 10
+THRESHOLD_Y .byte 6
+OFFSET_SLOW_Y .byte 4
+OFFSET_FAST_Y .byte 8
 
 
 evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr
