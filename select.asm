@@ -1,17 +1,21 @@
 select .namespace
 
 TXT5  .text "Choose a start configuration manually"
-TXT6  .text "Press any other key to return to main menu"
+TXT6  .text "Press x to return to main menu"
 TXT7  .text "Press F7 to start calculation in fast mode"
 TXT8  .text "Press F5 to start calculation in normal mode"
-TXT10 .text "Press F3 to switch to to erase pixel mode"
-TXT9  .text "Press F1 to switch to draw pixel mode"
+TXT9  .text "Press F1 to toggle between draw and erase pixel mode"
 MODE_DRAW  .text "DRAW "
 MODE_ERASE .text "ERASE"
 MODE_TEXT  .text "Mode"
 MODE_ULINE .text "===="
 TXT_X .text "X: $"
 TXT_Y .text "Y: $"
+
+VAL_MODE_ERASE = 0
+VAL_MODE_DRAW = 1
+
+STATE_DRAW_MODE .byte ?
 
 doSelect
     #setCol (TXT_BLUE << 4) | (TXT_WHITE)
@@ -30,6 +34,8 @@ doSelect
     lda BUTTON_IS_NOT_PRESSED
     sta BUTTON_STATE
     #load16BitImmediate world.setCell, MODIFY_VEC
+    lda #VAL_MODE_DRAW
+    sta STATE_DRAW_MODE
 
     #locate 15, 35
     #printString HEADER, len(HEADER)
@@ -45,8 +51,6 @@ doSelect
     #printString TXT6, len(TXT6)
     #locate 0, 50
     #printString TXT9, len(TXT9)
-    #locate 0, 52 
-    #printString TXT10, len(TXT10)
     #locate 68,4
     #printString MODE_DRAW, len(MODE_DRAW)
 
@@ -123,37 +127,45 @@ _isAscii
     lda myEvent.key.ascii
 _procPress
     cmp #$81
-    bne _checkErase
+    bne _checkStart4x4
+    lda STATE_DRAW_MODE
+    eor #1
+    sta STATE_DRAW_MODE
+    cmp #VAL_MODE_ERASE
+    beq _setErase
     #load16BitImmediate world.setCell, MODIFY_VEC
     #locate 68,4
     #printString MODE_DRAW, len(MODE_DRAW)
-    clc
-    rts
-_checkErase
-    cmp #$83
-    bne _start4x4
+    bra _endModeSelect
+_setErase
     #load16BitImmediate world.resetCell, MODIFY_VEC
     #locate 68,4
     #printString MODE_ERASE, len(MODE_ERASE)
+_endModeSelect
     clc
     rts
-_start4x4
+_checkStart4x4
     cmp #$85
-    bne _start1x1
+    bne _checkStart1x1
     jsr mouseOff
     #load16BitImmediate world.drawPic4x4, world.DRAW_VEC
     jsr performCalculation
-
     bra _exit
-_start1x1
+_checkStart1x1
     cmp #$87
-    bne _exit
+    bne _exitTest
     jsr mouseOff
     #load16BitImmediate world.drawPic, world.DRAW_VEC
     jsr performCalculation
+    bra _exit
+_exitTest
+    cmp #120
+    bne _doneNotStop
 _exit
     sec
-_done
+    rts
+_doneNotStop
+    clc
     rts
 
 
