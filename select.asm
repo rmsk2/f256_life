@@ -149,6 +149,7 @@ _checkStart4x4
     bne _checkStart1x1
     jsr mouseOff
     #load16BitImmediate world.drawPic4x4, world.DRAW_VEC
+    jsr hires.Off
     jsr performCalculation
     bra _exit
 _checkStart1x1
@@ -156,6 +157,7 @@ _checkStart1x1
     bne _exitTest
     jsr mouseOff
     #load16BitImmediate world.drawPic, world.DRAW_VEC
+    jsr hires.Off
     jsr performCalculation
     bra _exit
 _exitTest
