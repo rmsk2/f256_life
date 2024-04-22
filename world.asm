@@ -234,8 +234,7 @@ _updateMain
 
     rts
 
-TAB_ALIVE .byte 0, 0, 1, 1, 0, 0, 0, 0, 0
-TAB_DEAD  .byte 0, 0, 0, 1, 0, 0, 0, 0, 0
+TAB_STATE .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 0
 
 mcalcOneCell .macro
     lda CTR_colCount
@@ -243,11 +242,19 @@ mcalcOneCell .macro
     and #$7F
     sta CTR_x_plus_1
 
-    ; count living neighbours
+    ;https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Algorithms
+    ;To avoid decisions and branches in the counting loop, the rules can be rearranged 
+    ;from an egocentric approach of the inner field regarding its neighbors to a scientific 
+    ;observer's viewpoint: if the sum of all nine fields in a given neighborhood is three, 
+    ;the inner field state for the next generation will be life; if the all-field sum is four, 
+    ;the inner field retains its current state; and every other sum sets the inner field to 
+    ;death. 
     clc
     ldy CTR_colCount    
-    lda (UPPER_PTR), y
+    lda (LINE_PTR), y
+    sta TAB_STATE+4
     adc (LOWER_PTR), y
+    adc (UPPER_PTR), y
     pha
     adc LEFT_COUNT
     ldy CTR_x_plus_1
@@ -255,26 +262,14 @@ mcalcOneCell .macro
     adc (LOWER_PTR), y
     adc (LINE_PTR), y
     tax
+    pla
+    sta LEFT_COUNT
 
+    #mmuAlt
     ldy CTR_colCount
-    lda (LINE_PTR), y
-    beq _currentlyDead
-    pla
-    ina
-    sta LEFT_COUNT
-    #mmuAlt
-    lda TAB_ALIVE, x
+    lda TAB_STATE, x
     sta (LINE_PTR), y
     #mmuAct
-    bra _endCalcOne
-_currentlyDead
-    pla
-    sta LEFT_COUNT
-    #mmuAlt
-    lda TAB_DEAD, x
-    sta (LINE_PTR), y
-    #mmuAct
-_endCalcOne
 .endmacro
 
 calcOneCell
