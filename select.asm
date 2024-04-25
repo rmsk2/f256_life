@@ -22,6 +22,7 @@ doSelect
     jsr txtio.clear
     jsr txtio.home
     jsr world.init
+    jsr mouseInit
     jsr hires.setLayer0
     lda #GFX_WHITE
     sta hires.backgroundColor
@@ -70,6 +71,13 @@ doSelect
     jsr hires.off
     jsr mouseOff
     sec
+    rts
+
+mouseInit
+    lda THRESHOLD_MOVE_X
+    sta BRAKE.x
+    lda THRESHOLD_MOVE_Y    
+    sta BRAKE.y
     rts
 
 mouseOn
@@ -223,16 +231,27 @@ OFFSET         .byte 0, 0
 PRIMARY_BUTTON .byte LEFT_BUTTON                          ; select left or right handedness 
 BUTTON_STATE   .byte 0
 
-THRESHOLD_X .byte 7                                       ; Speed in X direction that signifies a fast speed
+THRESHOLD_MOVE_X .byte 4                                  ; You need THRESHOLD_MOVE_X kernel messages in x direction to move one pixel
+THRESHOLD_MOVE_Y .byte 4                                  ; You need THRESHOLD_MOVE_Y kernel messages in Y direction to move one pixel
+
+THRESHOLD_X .byte 8                                       ; Speed in X direction that signifies a fast speed
 OFFSET_SLOW_X .byte 4                                     ; pixels to move in x direction when speed is slow
-OFFSET_FAST_X .byte 12                                    ; pixels to move in x direction when speed is fast
+OFFSET_FAST_X .byte 4                                     ; pixels to move in x direction when speed is fast
 
-THRESHOLD_Y .byte 6                                       ; Speed in Y direction which is considered to be fast
+THRESHOLD_Y .byte 7                                       ; Speed in Y direction which is considered to be fast
 OFFSET_SLOW_Y .byte 4                                     ; pixels to move in y direction when speed is slow
-OFFSET_FAST_Y .byte 12                                    ; pixels to move in y direction when speed is fast
+OFFSET_FAST_Y .byte 4                                     ; pixels to move in y direction when speed is fast
 
+Brake_t .struct 
+    x .byte 0
+    y .byte 0
+.endstruct
 
-evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr
+BRAKE .dstruct Brake_t
+
+; ToDo: Introduce a middle speed and change fast speed to "really" fast.
+
+evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr, brakeAddr, moveThreshold
     ; determine direction using the sign of the offset
     lda \deltaAddr
     bmi _minus
@@ -259,13 +278,19 @@ _speedSlow
     lda #SPEED_SLOW
     sta SPEED
 _finished
-    ; determine how many pixels the mouse pointer is to be moved
-    lda \offsetSlowAddr
-    sta OFFSET    
     lda SPEED
-    cmp #SPEED_SLOW
-    beq _offsetDone
+    cmp #SPEED_FAST
+    bne _slow
     lda \offsetFastAddr
+    sta OFFSET
+    bra _offsetDone
+_slow
+    stz OFFSET
+    dec \brakeAddr
+    bne _offsetDone
+    lda \moveThreshold
+    sta \brakeAddr
+    lda \offsetSlowAddr
     sta OFFSET
 _offsetDone
 
@@ -336,7 +361,7 @@ mouseLeftRight
     bne _doEval
     jmp _done
 _doEval
-    #evalMouseOffset DIR_RIGHT, DIR_LEFT, myEvent.mouse.delta.x, THRESHOLD_X, OFFSET_SLOW_X, OFFSET_FAST_X
+    #evalMouseOffset DIR_RIGHT, DIR_LEFT, myEvent.mouse.delta.x, THRESHOLD_X, OFFSET_SLOW_X, OFFSET_FAST_X, BRAKE.x, THRESHOLD_MOVE_X
     lda DIRECTION
     cmp #DIR_RIGHT
     beq _right
@@ -373,7 +398,7 @@ mouseUpDown
     bne _doEval
     jmp _done
 _doEval
-    #evalMouseOffset DIR_DOWN, DIR_UP, myEvent.mouse.delta.y, THRESHOLD_Y, OFFSET_SLOW_Y, OFFSET_FAST_Y
+    #evalMouseOffset DIR_DOWN, DIR_UP, myEvent.mouse.delta.y, THRESHOLD_Y, OFFSET_SLOW_Y, OFFSET_FAST_Y, BRAKE.y, THRESHOLD_MOVE_Y
     lda DIRECTION
     cmp #DIR_DOWN
     beq _down
