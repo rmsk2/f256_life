@@ -86,8 +86,10 @@ mouseOn
     lda #1
     sta $D6E0
     stz $D6E2
-    stz $D6E3
-    stz $D6E4
+    lda #1
+    sta $D6E3
+    lda #128
+    sta $D6E4
     stz $D6E5
     #restoreIo
     rts
@@ -249,7 +251,7 @@ Brake_t .struct
 
 BRAKE .dstruct Brake_t
 
-; ToDo: Introduce a middle speed and change fast speed to "really" fast.
+; ToDo: Introduce a medium speed and change fast speed to "actually" fast.
 
 evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr, brakeAddr, moveThreshold
     ; determine direction using the sign of the offset
