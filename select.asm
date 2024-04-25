@@ -220,19 +220,20 @@ BUTTON_IS_NOT_PRESSED = 0
 DIRECTION      .byte 0
 SPEED          .byte 0
 OFFSET         .byte 0, 0
-PRIMARY_BUTTON .byte LEFT_BUTTON
+PRIMARY_BUTTON .byte LEFT_BUTTON                          ; select left or right handedness 
 BUTTON_STATE   .byte 0
 
-THRESHOLD_X .byte 7
-OFFSET_SLOW_X .byte 4
-OFFSET_FAST_X .byte 12
+THRESHOLD_X .byte 7                                       ; Speed in X direction that signifies a fast speed
+OFFSET_SLOW_X .byte 4                                     ; pixels to move in x direction when speed is slow
+OFFSET_FAST_X .byte 12                                    ; pixels to move in x direction when speed is fast
 
-THRESHOLD_Y .byte 6
-OFFSET_SLOW_Y .byte 4
-OFFSET_FAST_Y .byte 12
+THRESHOLD_Y .byte 6                                       ; Speed in Y direction which is considered to be fast
+OFFSET_SLOW_Y .byte 4                                     ; pixels to move in y direction when speed is slow
+OFFSET_FAST_Y .byte 12                                    ; pixels to move in y direction when speed is fast
 
 
 evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr
+    ; determine direction using the sign of the offset
     lda \deltaAddr
     bmi _minus
     lda #\dirPlus
@@ -248,6 +249,7 @@ _minus
     clc
     adc #1
 _speedCheck
+    ; determine whether speed is slow or fast
     cmp \theresholdAddr
     bcc _speedSlow
     lda #SPEED_FAST
@@ -257,6 +259,7 @@ _speedSlow
     lda #SPEED_SLOW
     sta SPEED
 _finished
+    ; determine how many pixels the mouse pointer is to be moved
     lda \offsetSlowAddr
     sta OFFSET    
     lda SPEED
