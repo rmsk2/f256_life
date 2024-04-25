@@ -73,6 +73,7 @@ doSelect
     sec
     rts
 
+
 mouseInit
     lda THRESHOLD_MOVE_X
     sta BRAKE.x
@@ -80,14 +81,17 @@ mouseInit
     sta BRAKE.y
     rts
 
+
 mouseOn
     #saveIo
     #setIo 0
     lda #1
     sta $D6E0
+    ; X position = 4 * (128/2) =  256
     stz $D6E2
     lda #1
     sta $D6E3
+    ; y position = 4 * (64/2) = 128
     lda #128
     sta $D6E4
     stz $D6E5
@@ -251,7 +255,8 @@ Brake_t .struct
 
 BRAKE .dstruct Brake_t
 
-; ToDo: Introduce a medium speed and change fast speed to "actually" fast.
+; ToDo: Introduce a medium speed and change fast speed to "actually" fast. ALso accuracy could
+; be improved. One idea for that is to make the move threshold direction aware.
 
 evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr, brakeAddr, moveThreshold
     ; determine direction using the sign of the offset
