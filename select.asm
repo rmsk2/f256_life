@@ -76,9 +76,11 @@ doSelect
 
 mouseInit
     lda THRESHOLD_MOVE_X
-    sta BRAKE.x
+    sta BRAKE.xplus
+    sta BRAKE.xminus
     lda THRESHOLD_MOVE_Y    
-    sta BRAKE.y
+    sta BRAKE.yplus
+    sta BRAKE.yminus
     rts
 
 
@@ -223,7 +225,8 @@ DIR_UP = 0
 DIR_DOWN = 1
 
 SPEED_SLOW = 0
-SPEED_FAST = 1
+SPEED_MEDIUM = 1
+SPEED_FAST = 2
 
 LEFT_BUTTON = 1
 RIGHT_BUTTON = 2
@@ -232,25 +235,34 @@ BUTTON_IS_PRESSED = 1
 BUTTON_IS_NOT_PRESSED = 0
 
 DIRECTION      .byte 0
+SIGN           .byte 0
 SPEED          .byte 0
 OFFSET         .byte 0, 0
 PRIMARY_BUTTON .byte LEFT_BUTTON                          ; select left or right handedness 
 BUTTON_STATE   .byte 0
 
-THRESHOLD_MOVE_X .byte 4                                  ; You need THRESHOLD_MOVE_X kernel messages in x direction to move one pixel
-THRESHOLD_MOVE_Y .byte 4                                  ; You need THRESHOLD_MOVE_Y kernel messages in Y direction to move one pixel
 
-THRESHOLD_X .byte 8                                       ; Speed in X direction that signifies a fast speed
+THRESHOLD_MOVE_X .byte 5                                  ; You need THRESHOLD_MOVE_X kernel messages in x direction to move one pixel
+THRESHOLD_MEDIUM_X .byte 6                                ; Speed in X direction that signifies a medium speed
+THRESHOLD_FAST_X .byte 12                                 ; Speed in X direction that signifies a fast speed
+
 OFFSET_SLOW_X .byte 4                                     ; pixels to move in x direction when speed is slow
-OFFSET_FAST_X .byte 4                                     ; pixels to move in x direction when speed is fast
+OFFSET_MEDIUM_X .byte 4                                   ; pixels to move in x direction when speed is slow
+OFFSET_FAST_X .byte 16                                    ; pixels to move in x direction when speed is fast
 
-THRESHOLD_Y .byte 7                                       ; Speed in Y direction which is considered to be fast
+THRESHOLD_MOVE_Y .byte 5                                  ; You need THRESHOLD_MOVE_Y kernel messages in Y direction to move one pixel
+THRESHOLD_MEDIUM_Y .byte 6
+THRESHOLD_FAST_Y .byte 12                                 ; Speed in Y direction which is considered to be medium speed
+
 OFFSET_SLOW_Y .byte 4                                     ; pixels to move in y direction when speed is slow
-OFFSET_FAST_Y .byte 4                                     ; pixels to move in y direction when speed is fast
+OFFSET_MEDIUM_Y .byte 4                                   ; pixels to move in x direction when speed is slow
+OFFSET_FAST_Y .byte 16                                    ; pixels to move in y direction when speed is fast
 
 Brake_t .struct 
-    x .byte 0
-    y .byte 0
+    xplus .byte 0
+    yplus .byte 0
+    xminus .byte 0
+    yminus .byte 0
 .endstruct
 
 BRAKE .dstruct Brake_t
@@ -258,7 +270,8 @@ BRAKE .dstruct Brake_t
 ; ToDo: Introduce a medium speed and change fast speed to "actually" fast. ALso accuracy could
 ; be improved. One idea for that is to make the move threshold direction aware.
 
-evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowAddr, offsetFastAddr, brakeAddr, moveThreshold
+calcMouseOffset .macro dirPlus, dirMinus, deltaAddr
+    stz SIGN
     ; determine direction using the sign of the offset
     lda \deltaAddr
     bmi _minus
@@ -267,6 +280,7 @@ evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdAddr, offsetSlowA
     lda \deltaAddr
     bra _speedCheck
 _minus
+    inc SIGN
     lda #\dirMinus
     sta DIRECTION
     ; reverse two's complement
@@ -275,33 +289,72 @@ _minus
     clc
     adc #1
 _speedCheck
-    ; determine whether speed is slow or fast
-    cmp \theresholdAddr
-    bcc _speedSlow
+.endmacro
+
+
+calcSpeed .macro thresholdMediumAddr, thresholdFastAddr
+    ; determine whether speed is slow, medium or fast
+    cmp \thresholdFastAddr
+    bcs _speedFast
+    cmp \thresholdMediumAddr
+    bcs _speedMedium
+    bra _speedSlow
+_speedFast
     lda #SPEED_FAST
+    sta SPEED
+    bra _finished
+_speedMedium
+    lda #SPEED_MEDIUM
     sta SPEED
     bra _finished
 _speedSlow
     lda #SPEED_SLOW
     sta SPEED
 _finished
+.endmacro
+
+
+calcOffset .macro offsetSlowAddr, offsetMediumAddr, offsetFastAddr, brakePlusAddr, brakeMinusAddr, moveThreshold
     lda SPEED
-    cmp #SPEED_FAST
-    bne _slow
+    cmp #SPEED_SLOW
+    beq _slow
+    cmp #SPEED_MEDIUM
+    bne _fast
+_medium
+    lda \offsetMediumAddr
+    sta OFFSET
+    bra _offsetDone
+_fast
     lda \offsetFastAddr
     sta OFFSET
     bra _offsetDone
 _slow
     stz OFFSET
-    dec \brakeAddr
+    lda SIGN
+    bne _signMinus
+    dec \brakePlusAddr
     bne _offsetDone
     lda \moveThreshold
-    sta \brakeAddr
+    sta \brakePlusAddr
+    bra _setOffset
+_signMinus
+    dec \brakeMinusAddr
+    bne _offsetDone
+    lda \moveThreshold
+    sta \brakeMinusAddr
+_setOffset
     lda \offsetSlowAddr
     sta OFFSET
 _offsetDone
-
 .endmacro
+
+
+evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdMediumAddr, theresholdFastAddr, offsetSlowAddr, offsetMediumAddr, offsetFastAddr, brakePlusAddr, brakeMinusAddr, moveThreshold
+    #calcMouseOffset \dirPlus, \dirMinus, \deltaAddr
+    #calcSpeed \theresholdMediumAddr, \theresholdFastAddr
+    #calcOffset \offsetSlowAddr, \offsetMediumAddr, \offsetFastAddr, \brakePlusAddr, \brakeMinusAddr, \moveThreshold
+.endmacro
+
 
 POS_TEMP       .word 0
 PIXEL_COLS     .byte GFX_GREEN, GFX_BLUE
@@ -368,7 +421,7 @@ mouseLeftRight
     bne _doEval
     jmp _done
 _doEval
-    #evalMouseOffset DIR_RIGHT, DIR_LEFT, myEvent.mouse.delta.x, THRESHOLD_X, OFFSET_SLOW_X, OFFSET_FAST_X, BRAKE.x, THRESHOLD_MOVE_X
+    #evalMouseOffset DIR_RIGHT, DIR_LEFT, myEvent.mouse.delta.x, THRESHOLD_MEDIUM_X, THRESHOLD_FAST_X, OFFSET_SLOW_X, OFFSET_MEDIUM_X, OFFSET_FAST_X, BRAKE.xplus, BRAKE.xminus, THRESHOLD_MOVE_X
     lda DIRECTION
     cmp #DIR_RIGHT
     beq _right
@@ -405,7 +458,7 @@ mouseUpDown
     bne _doEval
     jmp _done
 _doEval
-    #evalMouseOffset DIR_DOWN, DIR_UP, myEvent.mouse.delta.y, THRESHOLD_Y, OFFSET_SLOW_Y, OFFSET_FAST_Y, BRAKE.y, THRESHOLD_MOVE_Y
+    #evalMouseOffset DIR_DOWN, DIR_UP, myEvent.mouse.delta.y, THRESHOLD_MEDIUM_Y, THRESHOLD_FAST_Y, OFFSET_SLOW_Y, OFFSET_MEDIUM_Y, OFFSET_FAST_Y, BRAKE.yplus, BRAKE.yminus,THRESHOLD_MOVE_Y
     lda DIRECTION
     cmp #DIR_DOWN
     beq _down
