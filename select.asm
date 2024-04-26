@@ -270,7 +270,7 @@ BRAKE .dstruct Brake_t
 ; ToDo: Introduce a medium speed and change fast speed to "actually" fast. ALso accuracy could
 ; be improved. One idea for that is to make the move threshold direction aware.
 
-calcMouseOffset .macro dirPlus, dirMinus, deltaAddr
+calcDirection .macro dirPlus, dirMinus, deltaAddr
     stz SIGN
     ; determine direction using the sign of the offset
     lda \deltaAddr
@@ -332,12 +332,17 @@ _slow
     stz OFFSET
     lda SIGN
     bne _signMinus
+_signPlus
+    lda \moveThreshold
+    sta \brakeMinusAddr
     dec \brakePlusAddr
     bne _offsetDone
     lda \moveThreshold
     sta \brakePlusAddr
     bra _setOffset
 _signMinus
+    lda \moveThreshold
+    sta \brakePlusAddr
     dec \brakeMinusAddr
     bne _offsetDone
     lda \moveThreshold
@@ -350,7 +355,7 @@ _offsetDone
 
 
 evalMouseOffset .macro dirPlus, dirMinus, deltaAddr, theresholdMediumAddr, theresholdFastAddr, offsetSlowAddr, offsetMediumAddr, offsetFastAddr, brakePlusAddr, brakeMinusAddr, moveThreshold
-    #calcMouseOffset \dirPlus, \dirMinus, \deltaAddr
+    #calcDirection \dirPlus, \dirMinus, \deltaAddr
     #calcSpeed \theresholdMediumAddr, \theresholdFastAddr
     #calcOffset \offsetSlowAddr, \offsetMediumAddr, \offsetFastAddr, \brakePlusAddr, \brakeMinusAddr, \moveThreshold
 .endmacro
