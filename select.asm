@@ -234,28 +234,28 @@ RIGHT_BUTTON = 2
 BUTTON_IS_PRESSED = 1
 BUTTON_IS_NOT_PRESSED = 0
 
-DIRECTION      .byte 0
-SIGN           .byte 0
-SPEED          .byte 0
-OFFSET         .byte 0, 0
+DIRECTION      .byte 0                                    ; determined direction of delta sent by mouse
+SIGN           .byte 0                                    ; raw sign of delta sent by the mouse (1 = negative, 0 = positive)
+SPEED          .byte 0                                    ; determined speed (slow, medium or fast)
+OFFSET         .byte 0, 0                                 ; calculated number of pixels to move the mouse pointer
 PRIMARY_BUTTON .byte LEFT_BUTTON                          ; select left or right handedness 
-BUTTON_STATE   .byte 0
+BUTTON_STATE   .byte 0                                    ; state of the primary button
 
 
-THRESHOLD_MOVE_X .byte 5                                  ; You need THRESHOLD_MOVE_X kernel messages in x direction to move one pixel
-THRESHOLD_MEDIUM_X .byte 6                                ; Speed in X direction that signifies a medium speed
-THRESHOLD_FAST_X .byte 12                                 ; Speed in X direction that signifies a fast speed
+THRESHOLD_MOVE_X .byte 5                                  ; You need THRESHOLD_MOVE_X kernel messages in x direction to move the pointer at all when in slow mode
+THRESHOLD_MEDIUM_X .byte 6                                ; Absolute delta in X direction that signifies a medium speed
+THRESHOLD_FAST_X .byte 12                                 ; Absolute delta in X direction that signifies a fast speed
 
 OFFSET_SLOW_X .byte 4                                     ; pixels to move in x direction when speed is slow
-OFFSET_MEDIUM_X .byte 4                                   ; pixels to move in x direction when speed is slow
+OFFSET_MEDIUM_X .byte 4                                   ; pixels to move in x direction when speed is medium
 OFFSET_FAST_X .byte 16                                    ; pixels to move in x direction when speed is fast
 
-THRESHOLD_MOVE_Y .byte 5                                  ; You need THRESHOLD_MOVE_Y kernel messages in Y direction to move one pixel
-THRESHOLD_MEDIUM_Y .byte 6
-THRESHOLD_FAST_Y .byte 12                                 ; Speed in Y direction which is considered to be medium speed
+THRESHOLD_MOVE_Y .byte 5                                  ; You need THRESHOLD_MOVE_Y kernel messages in Y direction to move the pointer at all when in slow mode
+THRESHOLD_MEDIUM_Y .byte 6                                ; Absolute delta in Y direction which is considered to be medium speed
+THRESHOLD_FAST_Y .byte 12                                 ; Absolute delta in Y direction which is considered to be fast speed
 
 OFFSET_SLOW_Y .byte 4                                     ; pixels to move in y direction when speed is slow
-OFFSET_MEDIUM_Y .byte 4                                   ; pixels to move in x direction when speed is slow
+OFFSET_MEDIUM_Y .byte 4                                   ; pixels to move in x direction when speed is medium
 OFFSET_FAST_Y .byte 16                                    ; pixels to move in y direction when speed is fast
 
 Brake_t .struct 
@@ -267,12 +267,12 @@ Brake_t .struct
 
 BRAKE .dstruct Brake_t
 
-; ToDo: Introduce a medium speed and change fast speed to "actually" fast. ALso accuracy could
-; be improved. One idea for that is to make the move threshold direction aware.
 
 calcDirection .macro dirPlus, dirMinus, deltaAddr
     stz SIGN
-    ; determine direction using the sign of the offset
+    ; determine direction using the sign of the offset and
+    ; calculate the absolute value of the delta sent by the
+    ; mouse.
     lda \deltaAddr
     bmi _minus
     lda #\dirPlus
@@ -315,6 +315,7 @@ _finished
 
 
 calcOffset .macro offsetSlowAddr, offsetMediumAddr, offsetFastAddr, brakePlusAddr, brakeMinusAddr, moveThreshold
+    ; determine how many pixels the mouse pointer is to be moved
     lda SPEED
     cmp #SPEED_SLOW
     beq _slow
@@ -329,6 +330,8 @@ _fast
     sta OFFSET
     bra _offsetDone
 _slow
+    ; In slow mode we have to receive \moveThreshold messages pointing in same direction before
+    ; we begin to move the mouse. This is essential for control and accuracy.
     stz OFFSET
     lda SIGN
     bne _signMinus
@@ -368,6 +371,7 @@ MODIFY_VEC .word world.setCell
 modifyCell
     jmp (MODIFY_VEC)
 
+; draw a chunky 4x4 pixel at the current position of the mouse pointer
 drawPixel
     #move16Bit $D6E2, POS_TEMP
     #halve16Bit POS_TEMP
@@ -421,6 +425,7 @@ _valid2
     rts
 
 
+; move mouse pointer in x direction
 mouseLeftRight
     lda myEvent.mouse.delta.x
     bne _doEval
@@ -458,6 +463,7 @@ _return
     rts
 
 
+; move mouse pointer in y direction
 mouseUpDown 
     lda myEvent.mouse.delta.y
     bne _doEval
@@ -495,6 +501,7 @@ _return
     rts
 
 
+; record mouse clicks made with the primary button
 mouseClick
     lda myEvent.mouse.delta.buttons
     and PRIMARY_BUTTON
