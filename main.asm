@@ -60,6 +60,10 @@ mainMenu
 
     #locate 10, 30
     #printString END, len(END)
+
+    #locate 4, 43
+    #printString TXT_WIKI, len(TXT_WIKI)
+
     #locate 7, 45
     #printString TXT3, len(TXT3)
 
@@ -189,7 +193,7 @@ _done
 
 GEN_TXT  .text "Generation"
 GENU_TXT .text "=========="
-HEADER   .text "Conway's game of life: A cellular automaton (1.7.0)"
+HEADER   .text "Conway's game of life: A cellular automaton (1.7.1)"
 HEADER_U .text "==================================================="
 MENU1 .text "      1 : Random start configuration in fast mode"
 MENU2 .text "      2 : Random start configuration in normal mode"
@@ -200,6 +204,7 @@ END   .text "RUN/STOP: Reset to BASIC"
 TXT1  .text "The start configuration was chosen at random with about 31% of living cells"
 TXT2  .text "Press any key to return to main menu"
 TXT3  .text "Find the source code at: https://github.com/rmsk2/f256_life"
+TXT_WIKI  .text "Find more info at: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
 
 returnToBASIC    
     jsr sys64738
