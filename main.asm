@@ -41,9 +41,9 @@ _restart
 
 
 mainMenu
-    #locate 15, 5
+    #locate 12, 5
     #printString HEADER, len(HEADER)
-    #locate 15, 6
+    #locate 12, 6
     #printString HEADER_U, len(HEADER_U)
     #locate 10, 10
     #printString MENU1, len(MENU1)
@@ -189,11 +189,11 @@ _done
 
 GEN_TXT  .text "Generation"
 GENU_TXT .text "=========="
-HEADER   .text "Conway's game of life: A cellular automaton"
-HEADER_U .text "==========================================="
+HEADER   .text "Conway's game of life: A cellular automaton (1.7.0)"
+HEADER_U .text "==================================================="
 MENU1 .text "      1 : Random start configuration in fast mode"
 MENU2 .text "      2 : Random start configuration in normal mode"
-MENU3 .text "      3 : Select start configuration"
+MENU3 .text "      3 : Select start configuration using the mouse"
 MENU4 .text "      4 : Demo: Gosper's glider gun in normal mode"
 MENU5 .text "      5 : Demo: Gosper's glider gun in fast mode"
 END   .text "RUN/STOP: Reset to BASIC"
