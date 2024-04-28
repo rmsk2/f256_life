@@ -72,7 +72,6 @@ _wait
     cmp #$31
     bne _checkBig
     #load16BitImmediate world.drawPic, world.DRAW_VEC
-    #load16BitImmediate select.printMessage, PRINT_TYPE_VEC
     lda #1
     sta DO_RANDOM_FILL
     jsr performCalculation
@@ -82,7 +81,6 @@ _checkBig
     cmp #$32
     bne _checkManual
     #load16BitImmediate world.drawPic4x4, world.DRAW_VEC
-    #load16BitImmediate select.printMessage, PRINT_TYPE_VEC
     lda #1
     sta DO_RANDOM_FILL
     jsr performCalculation
