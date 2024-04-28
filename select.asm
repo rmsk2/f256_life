@@ -15,6 +15,13 @@ TXT_Y .text "Y: $"
 VAL_MODE_ERASE = 0
 VAL_MODE_DRAW = 1
 
+TXT4  .text "The start configuration was chosen by you"
+
+printMessage
+    #printString TXT4, len(TXT4)
+    rts
+
+
 STATE_DRAW_MODE .byte ?
 
 doSelect
@@ -100,6 +107,7 @@ mouseOn
     #restoreIo
     rts
 
+
 mouseOff
     #saveIo
     #setIo 0
@@ -107,6 +115,7 @@ mouseOff
     sta $D6E0
     #restoreIo
     rts
+
 
 eventLoop
     ; Peek at the queue to see if anything is pending
