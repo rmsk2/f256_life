@@ -251,16 +251,16 @@ PRIMARY_BUTTON .byte LEFT_BUTTON                          ; select left or right
 BUTTON_STATE   .byte 0                                    ; state of the primary button
 
 
-THRESHOLD_MOVE_X .byte 5                                  ; You need THRESHOLD_MOVE_X kernel messages in x direction to move the pointer at all when in slow mode
-THRESHOLD_MEDIUM_X .byte 6                                ; Absolute delta in X direction that signifies a medium speed
+THRESHOLD_MOVE_X .byte 6                                  ; You need THRESHOLD_MOVE_X kernel messages in x direction to move the pointer at all when in slow mode
+THRESHOLD_MEDIUM_X .byte 4                                ; Absolute delta in X direction that signifies a medium speed
 THRESHOLD_FAST_X .byte 12                                 ; Absolute delta in X direction that signifies a fast speed
 
 OFFSET_SLOW_X .byte 4                                     ; pixels to move in x direction when speed is slow
 OFFSET_MEDIUM_X .byte 4                                   ; pixels to move in x direction when speed is medium
 OFFSET_FAST_X .byte 16                                    ; pixels to move in x direction when speed is fast
 
-THRESHOLD_MOVE_Y .byte 5                                  ; You need THRESHOLD_MOVE_Y kernel messages in Y direction to move the pointer at all when in slow mode
-THRESHOLD_MEDIUM_Y .byte 6                                ; Absolute delta in Y direction which is considered to be medium speed
+THRESHOLD_MOVE_Y .byte 6                                  ; You need THRESHOLD_MOVE_Y kernel messages in Y direction to move the pointer at all when in slow mode
+THRESHOLD_MEDIUM_Y .byte 4                                ; Absolute delta in Y direction which is considered to be medium speed
 THRESHOLD_FAST_Y .byte 12                                 ; Absolute delta in Y direction which is considered to be fast speed
 
 OFFSET_SLOW_Y .byte 4                                     ; pixels to move in y direction when speed is slow
