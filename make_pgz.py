@@ -1,7 +1,7 @@
 import sys
 import os
 
-start_address = 0x0800
+start_address = 0x0300
 
 def make_24bit_address(addr):
     help, lo = divmod(addr, 256)
