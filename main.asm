@@ -161,9 +161,6 @@ _continue
     #printString GEN_TXT, len(GEN_TXT)
     #locate 68,4
     #printString GENU_TXT, len(GENU_TXT)
-    #locate 68, 5
-    lda #36
-    jsr txtio.charOut
 
     lda DO_RANDOM_FILL
     beq _noFill
@@ -178,11 +175,12 @@ _doCalc
     bcs _done
     jsr world.draw
     #inc16Bit GENERATION
-    #locate 69,5
-    lda GENERATION+1
-    jsr txtio.printByte
+    #locate 68,5
     lda GENERATION
-    jsr txtio.printByte
+    sta txtio.WORD_TEMP
+    lda GENERATION + 1
+    sta txtio.WORD_TEMP + 1
+    jsr txtio.printWordDecimal
     bra _doCalc
 _done
     jsr hires.Off
@@ -191,7 +189,7 @@ _done
 
 GEN_TXT  .text "Generation"
 GENU_TXT .text "=========="
-HEADER   .text "Conway's game of life: A cellular automaton (1.7.2)"
+HEADER   .text "Conway's game of life: A cellular automaton (1.7.3)"
 HEADER_U .text "==================================================="
 MENU1 .text "      1 : Random start configuration in fast mode"
 MENU2 .text "      2 : Random start configuration in normal mode"
