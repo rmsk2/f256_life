@@ -189,7 +189,7 @@ _done
 
 GEN_TXT  .text "Generation"
 GENU_TXT .text "=========="
-HEADER   .text "Conway's game of life: A cellular automaton (1.7.3)"
+HEADER   .text "Conway's game of life: A cellular automaton (1.7.4)"
 HEADER_U .text "==================================================="
 MENU1 .text "      1 : Random start configuration in fast mode"
 MENU2 .text "      2 : Random start configuration in normal mode"

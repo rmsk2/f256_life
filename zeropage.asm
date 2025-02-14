@@ -1,3 +1,5 @@
+; 24 bytes for data structure
+COPY_TAB = $70;-$88
 ZP_GRAPHIC_PTR = $90;$91
 TXT_PTR1 = $92;$93
 TXT_PTR2 = $94;$95
@@ -24,3 +26,6 @@ DEMO_PTR = $B3;$B4
 MEM_PTR1 = $B5;$B6
 MEM_PTR2 = $B7;$B8
 MEM_PTR3 = $B9;$BA
+NUM_BYTES = $BB
+PTR_SOURCE = $BC;/$BD
+PTR_TARGET = $BE;/$BF

@@ -25,6 +25,6 @@ data = data + end_pad[0:(num_blocks * BLOCK_LEN) - len(data)]
 start_offset = 0
 end_offset = BLOCK_LEN
 
-with open(f"f256_life.bin", "wb") as f:
+with open(sys.argv[3], "wb") as f:
     f.write(data)
     
